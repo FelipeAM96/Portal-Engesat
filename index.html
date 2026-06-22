@@ -492,15 +492,26 @@
             actionsContainer.classList.remove('hidden');
 
             if (!map) {
+                const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19, crossOrigin: true
+                });
+
+                const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    maxZoom: 19, crossOrigin: true
+                });
+
                 map = L.map('map', {
                     zoomControl: true,
                     attributionControl: false,
-                    preferCanvas: true
+                    preferCanvas: true,
+                    layers: [osmLayer] // OSM como padrão
                 });
                 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19, crossOrigin: true
-                }).addTo(map);
+                // Adiciona o controle de seleção de mapa base no canto superior esquerdo
+                L.control.layers({
+                    "Mapa Base (OSM)": osmLayer,
+                    "Satélite (Esri)": satLayer
+                }, null, { position: 'topleft' }).addTo(map);
 
                 L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(map);
 
