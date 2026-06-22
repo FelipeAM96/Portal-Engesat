@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ferramentas de Suporte - ENGESAT</title>
+    <link rel="icon" type="image/png" href="img/Treco_Engesat.png" onerror="this.remove()" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- JSZip (Print AOI) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- Leaflet CSS e JS (Print AOI) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- html2canvas (Print AOI) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- FontAwesome & jsPDF (README) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        /* Scrollbar customizada para textareas e áreas com scroll */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Print AOI - Barra de Escala */
+        .leaflet-control-scale-line {
+            border: 2px solid #0f172a !important;
+            border-top: none !important;
+            line-height: 1.5 !important;
+            padding: 2px 5px 1px !important;
+            font-size: 14px !important;
+            font-weight: bold !important;
+            color: #0f172a !important;
+            background: rgba(255, 255, 255, 0.9) !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        /* README - Spinner de Loading */
+        .spinner { 
+            border: 4px solid rgba(0,0,0,0.1); 
+            width: 36px; height: 36px; 
+            border-radius: 50%; 
+            border-left-color: #3b82f6; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Esconder utilitário para as abas */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        /* Variantes flex que precisam do active */
+        .tab-content.active.flex-container { display: flex; }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Navbar / Tabs -->
+    <div class="bg-white shadow-md z-50 sticky top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 border-b border-gray-200">
+                <div class="flex-shrink-0 flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl">E</div>
+                    <span class="font-bold text-xl text-slate-800 tracking-tight">Portal Engesat</span>
+                </div>
+                <div class="flex space-x-1 sm:space-x-8">
+                    <button onclick="switchTab('tab-print-aoi')" id="btn-tab-print-aoi" class="tab-btn border-blue-600 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-map-marked-alt mr-2"></i>Print AOI
+                    </button>
+                    <button onclick="switchTab('tab-wetransfer')" id="btn-tab-wetransfer" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-paper-plane mr-2"></i>WeTransfer
+                    </button>
+                    <button onclick="switchTab('tab-readme')" id="btn-tab-readme" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-file-signature mr-2"></i>README
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow p-4 sm:p-8">
+
+        <!-- ========================================== -->
+        <!-- ABA 1: PRINT AOI                           -->
+        <!-- ========================================== -->
+        <div id="tab-print-aoi" class="tab-content active max-w-5xl mx-auto w-full">
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div class="bg-blue-600 p-6 text-white text-center">
+                    <h1 class="text-3xl font-bold">Print AOI</h1>
+                    <p class="text-blue-100 mt-2">Gere imagens de seus polígonos projetados em SIRGAS 2000 UTM automaticamente.</p>
+                </div>
+                <div class="p-8">
+                    <div id="errorBox" class="hidden mb-6 p-4 bg-red-100 text-red-700 border border-red-300 rounded-lg flex items-center">
+                        <svg class="w-6 h-6 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span id="errorMessage">Ocorreu um erro.</span>
+                    </div>
+
+                    <div class="mb-8 flex flex-col items-center">
+                        <label for="fileInput" class="cursor-pointer border-2 border-dashed border-blue-400 bg-blue-50 hover:bg-blue-100 transition-colors w-full max-w-lg p-10 rounded-xl text-center">
+                            <svg class="w-12 h-12 text-blue-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            <span class="text-lg font-semibold text-blue-700 block" id="fileLabel">Clique para escolher o arquivo (.kml ou .kmz)</span>
+                            <span class="text-sm text-blue-500 mt-1 block">Ou arraste e solte aqui</span>
+                        </label>
+                        <input type="file" id="fileInput" accept=".kml,.kmz" class="hidden" />
+                    </div>
+
+                    <div id="actionsContainer" class="hidden flex justify-center gap-4 mb-6">
+                        <button id="copyBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition hover:-translate-y-1 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            Copiar Imagem
+                        </button>
+                        <button id="downloadBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition hover:-translate-y-1 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Baixar Imagem PNG
+                        </button>
+                    </div>
+
+                    <div id="canvasContainer" class="hidden w-full border border-slate-300 rounded-lg shadow-inner bg-slate-200 flex justify-center items-center relative" style="height: 600px;">
+                        <div id="map" class="w-full h-full z-0 rounded-lg"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para Cópia Manual Print AOI -->
+            <div id="copyModal" class="hidden fixed inset-0 z-[1000] bg-black/80 flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+                    <div class="p-4 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
+                        <h3 class="text-lg font-bold text-slate-800">Cópia Manual Necessária</h3>
+                        <button id="closeModalBtn" class="text-slate-500 hover:text-red-500 font-bold text-3xl leading-none">&times;</button>
+                    </div>
+                    <div class="p-4 overflow-auto flex-1 bg-slate-200 flex justify-center items-center">
+                        <img id="modalImage" src="" class="max-w-full h-auto border shadow-sm" alt="Mapa Gerado" />
+                    </div>
+                    <div class="p-4 border-t bg-slate-50 text-center rounded-b-xl text-slate-600">
+                        <p>O seu navegador bloqueou a cópia automática por questões de segurança.<br/>
+                        <strong>Clique com o botão direito na imagem acima</strong> e selecione <strong>"Copiar imagem"</strong> para colar onde quiser.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ABA 2: WETRANSFER GENERATOR                -->
+        <!-- ========================================== -->
+        <div id="tab-wetransfer" class="tab-content flex-container max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex-col md:flex-row border border-slate-200">
+            <!-- Left Panel -->
+            <div id="wetransfer-form-panel" class="w-full md:w-5/12 bg-slate-50 p-6 sm:p-8 border-r border-slate-200 flex flex-col gap-6 overflow-y-auto" style="max-height: 85vh;">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900 mb-1">Gerador WeTransfer</h1>
+                    <p class="text-sm text-slate-500">Preencha os dados abaixo para gerar a mensagem padrão.</p>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-slate-700">Tipo de Envio</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" id="btn-type-img" class="wt-type-btn active py-2 px-3 text-sm font-medium rounded-lg border-2 border-blue-600 bg-blue-50 text-blue-700 transition-colors" onclick="setWtType('img')">Imagem</button>
+                        <button type="button" id="btn-type-alt" class="wt-type-btn py-2 px-3 text-sm font-medium rounded-lg border-2 border-transparent bg-white shadow-sm text-slate-600 hover:bg-slate-100 transition-colors" onclick="setWtType('alt')">Altimetria</button>
+                        <button type="button" id="btn-type-combo" class="wt-type-btn py-2 px-3 text-sm font-medium rounded-lg border-2 border-transparent bg-white shadow-sm text-slate-600 hover:bg-slate-100 transition-colors" onclick="setWtType('combo')">Combo</button>
+                    </div>
+                </div>
+
+                <div id="block-altimetry" class="hidden flex-col gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Dados Altimétricos</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Produto</label>
+                        <select id="alt-product" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="WorldDEM Neo">WorldDEM Neo (5m)</option>
+                            <option value="WorldDEM">WorldDEM (12m)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Modelos Incluídos</label>
+                        <select id="alt-model" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="MDS e MDT">MDS e MDT</option>
+                            <option value="MDT">Apenas MDT</option>
+                            <option value="MDS">Apenas MDS</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="block-image" class="flex flex-col gap-4">
+                    <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Dados de Imagem</h3>
+                    <div id="images-container" class="flex flex-col gap-4"></div>
+                    <button type="button" onclick="addImageEntry()" class="text-sm text-blue-600 font-medium hover:text-blue-800 flex items-center gap-1 self-start transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Adicionar outro satélite
+                    </button>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mt-2">
+                        <h4 class="text-sm font-semibold text-slate-700 mb-3">Formatos e Opções</h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-2 text-sm text-slate-600">
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fmt-geotif" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> GeoTIFF</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fmt-kmz" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> KMZ</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fmt-ecw" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> ECW</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fmt-dwg" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> DWG</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fmt-shp" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> SHP</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900 font-medium text-blue-700"><input type="checkbox" id="opt-carta" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> Carta Imagem</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Projeção (Comum)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Fuso UTM</label>
+                            <input type="number" id="utm-zone" min="17" max="25" value="23" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Hemisfério</label>
+                            <select id="utm-hemi" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="Sul">Sul (S)</option>
+                                <option value="Norte">Norte (N)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <label class="text-sm font-semibold text-slate-700">Observações Finais (Opcional)</label>
+                    <textarea id="obs-text" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Ex: Segue também a Carta Imagem em anexo..."></textarea>
+                </div>
+
+                <button onclick="generateMessage()" class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98]">
+                    Gerar Mensagem
+                </button>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="w-full md:w-7/12 bg-white p-6 sm:p-8 flex flex-col relative" style="min-height: 50vh;">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-slate-800">Resultado Final</h2>
+                    <button onclick="copyWtToClipboard()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copiar Texto</span>
+                    </button>
+                </div>
+                <textarea id="wt-output" readonly class="flex-grow w-full bg-slate-50 border border-slate-200 rounded-xl p-5 text-sm font-mono text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 leading-relaxed"></textarea>
+                <div id="wt-toast" class="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full font-medium text-sm shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-10">
+                    Mensagem copiada para a área de transferência!
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ABA 3: README GENERATOR                    -->
+        <!-- ========================================== -->
+        <div id="tab-readme" class="tab-content max-w-4xl mx-auto w-full">
+            <header class="bg-white rounded-xl shadow-sm p-6 mb-6 border-t-4 border-blue-600">
+                <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                    <i class="fas fa-file-signature text-blue-600"></i>
+                    Gerador de Instruções para Clientes (README)
+                </h1>
+                <p class="text-slate-600 mt-2">
+                    Selecione a pasta raiz do projeto. O sistema agrupará os arquivos de suporte, traduzirá nomenclaturas complexas e gerará um guia simples e direto.
+                </p>
+            </header>
+
+            <div class="bg-white rounded-xl shadow-sm p-8 mb-6 text-center">
+                <input type="file" id="folderInput" webkitdirectory directory multiple class="hidden" />
+                <button id="btnSelectFolder" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center gap-3 mx-auto text-lg w-full md:w-auto">
+                    <i class="fas fa-folder-open text-xl"></i>
+                    Selecionar Pasta Mãe do Projeto
+                </button>
+                <p class="text-sm text-slate-500 mt-3"><i class="fas fa-lock"></i> Processamento 100% local. Rápido e Seguro.</p>
+
+                <div id="loadingIndicator" class="hidden mt-6 flex-col items-center justify-center">
+                    <div class="spinner mb-2"></div>
+                    <p class="text-slate-600 font-medium">Analisando agrupamentos e gerando texto didático...</p>
+                </div>
+            </div>
+
+            <div id="resultArea" class="hidden">
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                        <h2 class="text-xl font-bold text-slate-800"><i class="fas fa-eye text-green-500 mr-2"></i> Pré-visualização das Instruções</h2>
+                        <div class="flex gap-3 w-full md:w-auto">
+                            <button id="btnDownloadTxt" class="flex-1 md:flex-none bg-slate-800 hover:bg-slate-900 text-white py-2 px-4 rounded font-medium flex items-center justify-center gap-2 transition-colors">
+                                <i class="fas fa-file-alt"></i> Salvar .TXT
+                            </button>
+                            <button id="btnDownloadPdf" class="flex-1 md:flex-none bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded font-medium flex items-center justify-center gap-2 transition-colors">
+                                <i class="fas fa-file-pdf"></i> Salvar PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div id="saveStatus" class="hidden mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-center font-medium shadow-sm transition-opacity"></div>
+                    <textarea id="previewText" class="w-full h-96 p-4 border border-slate-300 rounded-lg bg-slate-50 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y" spellcheck="false"></textarea>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // ==========================================
+        // LÓGICA GERAL & TAB NAVIGATION
+        // ==========================================
+        function switchTab(tabId) {
+            // Oculta todas as abas
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.remove('active', 'flex-container');
+            });
+            
+            // Remove estilos ativos dos botões
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-blue-600', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+
+            // Ativa a aba atual
+            const targetTab = document.getElementById(tabId);
+            targetTab.classList.add('active');
+            if (tabId === 'tab-wetransfer') targetTab.classList.add('flex-container'); // Precisa ser flex
+
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.add('border-blue-600', 'text-blue-600');
+            activeBtn.classList.remove('border-transparent', 'text-gray-500');
+
+            // Correção Leaflet: Recalcular tamanho do mapa caso a aba tenha sido revelada
+            if (tabId === 'tab-print-aoi' && map) {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
+        }
+
+        // ==========================================
+        // APP 1: PRINT AOI SCRIPT
+        // ==========================================
+        const fileInput = document.getElementById('fileInput');
+        const fileLabel = document.getElementById('fileLabel');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const actionsContainer = document.getElementById('actionsContainer');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const errorBox = document.getElementById('errorBox');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let map = null;
+        let polygonLayer = null;
+        let currentFileName = '';
+        let polygonsData = [];
+
+        const a_elipsoide = 6378137.0; 
+        const f_elipsoide = 1 / 298.257222101; 
+        const e2_elipsoide = 2 * f_elipsoide - f_elipsoide * f_elipsoide; 
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            errorBox.classList.add('hidden');
+            currentFileName = file.name.split('.').slice(0, -1).join('.'); 
+            fileLabel.textContent = `Arquivo: ${file.name}`;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                let kmlText = '';
+
+                if (file.name.toLowerCase().endsWith('.kmz')) {
+                    const zip = await JSZip.loadAsync(arrayBuffer);
+                    const kmlFile = Object.values(zip.files).find(f => f.name.toLowerCase().endsWith('.kml'));
+                    if (!kmlFile) throw new Error("Nenhum arquivo KML encontrado dentro do KMZ.");
+                    kmlText = await kmlFile.async('string');
+                } else if (file.name.toLowerCase().endsWith('.kml')) {
+                    kmlText = new TextDecoder('utf-8').decode(arrayBuffer);
+                } else {
+                    throw new Error("Formato não suportado. Envie .kml ou .kmz");
+                }
+
+                processKML(kmlText);
+
+            } catch (err) {
+                errorMessage.textContent = "Erro ao processar: " + err.message;
+                errorBox.classList.remove('hidden');
+                canvasContainer.classList.add('hidden');
+                actionsContainer.classList.add('hidden');
+                console.error(err);
+            }
+        });
+
+        function processKML(xmlText) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            const polygons = xmlDoc.getElementsByTagName("Polygon");
+            if (polygons.length === 0) throw new Error("Nenhum polígono encontrado.");
+
+            polygonsData = [];
+            for (let i = 0; i < polygons.length; i++) {
+                const outers = polygons[i].getElementsByTagName("outerBoundaryIs");
+                if (outers.length > 0) {
+                    const coordsNodes = outers[0].getElementsByTagName("coordinates");
+                    if (coordsNodes.length > 0) {
+                        const coordsStr = coordsNodes[0].textContent.trim();
+                        const pointsStr = coordsStr.split(/\s+/);
+                        const ring = [];
+                        let totalLon = 0, totalLat = 0, pointsCount = 0;
+                        
+                        pointsStr.forEach(p => {
+                            const parts = p.split(',');
+                            if (parts.length >= 2) {
+                                const lon = parseFloat(parts[0]);
+                                const lat = parseFloat(parts[1]);
+                                if (!isNaN(lon) && !isNaN(lat)) {
+                                    ring.push({ lon, lat });
+                                    totalLon += lon; totalLat += lat; pointsCount++;
+                                }
+                            }
+                        });
+                        
+                        if (ring.length > 0) {
+                            const avgLon = totalLon / pointsCount;
+                            const avgLat = totalLat / pointsCount;
+                            const zoneNumber = Math.floor((avgLon + 180) / 6) + 1;
+                            const hemisphere = avgLat >= 0 ? 'N' : 'S';
+                            const projectionName = `UTM ${zoneNumber}${hemisphere} SIRGAS 2000`;
+
+                            const ringUTM = ring.map(pt => latLonToUTM(pt.lat, pt.lon, zoneNumber));
+                            const areaSqMeters = calculateShoelaceArea(ringUTM);
+                            const areaKm2 = areaSqMeters / 1000000;
+
+                            polygonsData.push({ ringWGS84: ring, areaKm2, projectionName, index: i + 1 });
+                        }
+                    }
+                }
+            }
+
+            if (polygonsData.length === 0) throw new Error("Não foi possível extrair coordenadas.");
+            renderMap(polygonsData);
+        }
+
+        function latLonToUTM(lat, lon, zone) {
+            const k0 = 0.9996;
+            const lonOrigin = (zone - 1) * 6 - 180 + 3; 
+            const latRad = lat * Math.PI / 180;
+            const lonRad = lon * Math.PI / 180;
+            const lonOriginRad = lonOrigin * Math.PI / 180;
+
+            const N = a_elipsoide / Math.sqrt(1 - e2_elipsoide * Math.sin(latRad) * Math.sin(latRad));
+            const T = Math.tan(latRad) * Math.tan(latRad);
+            const C = (e2_elipsoide / (1 - e2_elipsoide)) * Math.cos(latRad) * Math.cos(latRad);
+            const A = Math.cos(latRad) * (lonRad - lonOriginRad);
+
+            const M = a_elipsoide * ((1 - e2_elipsoide/4 - 3*e2_elipsoide*e2_elipsoide/64 - 5*e2_elipsoide*e2_elipsoide*e2_elipsoide/256) * latRad 
+                - (3*e2_elipsoide/8 + 3*e2_elipsoide*e2_elipsoide/32 + 45*e2_elipsoide*e2_elipsoide*e2_elipsoide/1024) * Math.sin(2*latRad) 
+                + (15*e2_elipsoide*e2_elipsoide/256 + 45*e2_elipsoide*e2_elipsoide*e2_elipsoide/1024) * Math.sin(4*latRad) 
+                - (35*e2_elipsoide*e2_elipsoide*e2_elipsoide/3072) * Math.sin(6*latRad));
+
+            let easting = k0 * N * (A + (1-T+C)*A*A*A/6 + (5-18*T+T*T+72*C-58*(e2_elipsoide/(1-e2_elipsoide)))*A*A*A*A*A/120) + 500000.0;
+            let northing = k0 * (M + N * Math.tan(latRad) * (A*A/2 + (5-T+9*C+4*C*C)*A*A*A*A/24 + (61-58*T+T*T+600*C-330*(e2_elipsoide/(1-e2_elipsoide)))*A*A*A*A*A*A/720));
+
+            if (lat < 0) northing += 10000000.0;
+            return { easting, northing };
+        }
+
+        function calculateShoelaceArea(points) {
+            let area = 0;
+            for (let i = 0; i < points.length; i++) {
+                let j = (i + 1) % points.length;
+                area += points[i].easting * points[j].northing;
+                area -= points[j].easting * points[i].northing;
+            }
+            return Math.abs(area) / 2.0;
+        }
+
+        function updateLegend(areaKm2, projectionName, index = null) {
+            const titleElem = document.getElementById('legendTitle');
+            if(titleElem) {
+                let titleStr = `Local: ${currentFileName}`;
+                if (index !== null) titleStr += ` (Polígono ${index})`;
+                titleElem.textContent = titleStr;
+                document.getElementById('legendArea').textContent = `Área: ${areaKm2.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} km²`;
+                document.getElementById('legendProj').textContent = `Sistema: ${projectionName}`;
+            }
+        }
+
+        function renderMap(polygonsData) {
+            canvasContainer.classList.remove('hidden');
+            actionsContainer.classList.remove('hidden');
+
+            if (!map) {
+                map = L.map('map', {
+                    zoomControl: true,
+                    attributionControl: false,
+                    preferCanvas: true
+                });
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19, crossOrigin: true
+                }).addTo(map);
+
+                L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(map);
+
+                const NorthControl = L.Control.extend({
+                    options: { position: 'topright' },
+                    onAdd: function () {
+                        const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control flex flex-col items-center');
+                        div.style.cssText = 'background-color: #ffffff; border: 2px solid #cbd5e1; border-radius: 6px; padding: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);';
+                        div.innerHTML = `
+                            <span style="font-weight: bold; font-size: 20px; color: #0f172a; line-height: 1; margin-bottom: 4px;">N</span>
+                            <svg style="width: 24px; height: 40px;" viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 0 L24 36 L12 28 L0 36 Z" fill="#94a3b8"/><path d="M12 0 L12 28 L0 36 Z" fill="#334155"/>
+                            </svg>`;
+                        return div;
+                    }
+                });
+                map.addControl(new NorthControl());
+
+                const LegendControl = L.Control.extend({
+                    options: { position: 'bottomright' },
+                    onAdd: function () {
+                        const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control text-left');
+                        div.style.cssText = 'background-color: #ffffff; border: 2px solid #cbd5e1; border-radius: 8px; padding: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); color: #0f172a;';
+                        div.innerHTML = `
+                            <p id="legendTitle" style="font-weight: bold; font-size: 16px; margin-bottom: 6px; margin-top: 0;">Local: -</p>
+                            <p id="legendArea" style="font-size: 14px; margin: 2px 0;">Área: -</p>
+                            <p id="legendProj" style="font-size: 14px; margin: 2px 0;">Sistema: -</p>`;
+                        return div;
+                    }
+                });
+                map.addControl(new LegendControl());
+            }
+
+            map.invalidateSize();
+            if (polygonLayer) map.removeLayer(polygonLayer);
+
+            polygonLayer = L.featureGroup().addTo(map);
+
+            polygonsData.forEach((polyData, idx) => {
+                const latLngs = polyData.ringWGS84.map(pt => [pt.lat, pt.lon]);
+                const isSelected = idx === 0; 
+                
+                const leafletPoly = L.polygon(latLngs, {
+                    color: isSelected ? '#ff0000' : '#f87171',
+                    weight: isSelected ? 4 : 2,
+                    fillOpacity: isSelected ? 0.1 : 0
+                });
+
+                if (polygonsData.length > 1) {
+                    leafletPoly.on('click', () => {
+                        polygonLayer.eachLayer(layer => layer.setStyle({ color: '#f87171', weight: 2, fillOpacity: 0 }));
+                        leafletPoly.setStyle({ color: '#ff0000', weight: 4, fillOpacity: 0.1 });
+                        updateLegend(polyData.areaKm2, polyData.projectionName, polyData.index);
+                    });
+                }
+                polygonLayer.addLayer(leafletPoly);
+            });
+
+            updateLegend(polygonsData[0].areaKm2, polygonsData[0].projectionName, polygonsData.length > 1 ? polygonsData[0].index : null);
+
+            setTimeout(() => { 
+                map.invalidateSize(); 
+                map.fitBounds(polygonLayer.getBounds(), { padding: [20, 20] }); 
+            }, 100);
+        }
+
+        async function generateMapCanvas() {
+            const mapNode = document.getElementById('map');
+            const zoomControl = document.querySelector('.leaflet-control-zoom');
+            if (zoomControl) zoomControl.style.display = 'none';
+
+            const originalScrollX = window.scrollX;
+            const originalScrollY = window.scrollY;
+            window.scrollTo(0, 0);
+
+            await new Promise(r => setTimeout(r, 500));
+
+            try {
+                const canvas = await html2canvas(mapNode, {
+                    useCORS: true, allowTaint: false, backgroundColor: '#ffffff', scale: 2
+                });
+                return canvas;
+            } finally {
+                if (zoomControl) zoomControl.style.display = '';
+                window.scrollTo(originalScrollX, originalScrollY);
+            }
+        }
+
+        downloadBtn.addEventListener('click', async () => {
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = 'Processando...';
+            downloadBtn.disabled = true;
+
+            try {
+                const canvas = await generateMapCanvas();
+                const link = document.createElement('a');
+                link.download = `${currentFileName}_Mapa.png`;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.click();
+            } catch (err) {
+                alert("Erro ao gerar imagem.");
+            } finally {
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+            }
+        });
+
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            document.getElementById('copyModal').classList.add('hidden');
+        });
+
+        copyBtn.addEventListener('click', async () => {
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = 'Copiando...';
+            copyBtn.disabled = true;
+
+            try {
+                const canvas = await generateMapCanvas();
+                canvas.toBlob(async (blob) => {
+                    let copied = false;
+                    try {
+                        if (navigator.clipboard && navigator.clipboard.write) {
+                            const clipboardItem = new ClipboardItem({ 'image/png': blob });
+                            await navigator.clipboard.write([clipboardItem]);
+                            copied = true;
+                        }
+                    } catch (apiError) {}
+
+                    if (copied) {
+                        copyBtn.innerHTML = 'Copiado!';
+                        setTimeout(() => { copyBtn.innerHTML = originalText; }, 2000);
+                        copyBtn.disabled = false;
+                    } else {
+                        const imgUrl = canvas.toDataURL('image/png', 1.0);
+                        document.getElementById('modalImage').src = imgUrl;
+                        document.getElementById('copyModal').classList.remove('hidden');
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.disabled = false;
+                    }
+                }, 'image/png', 1.0);
+            } catch (err) {
+                alert("Erro ao copiar.");
+                copyBtn.disabled = false;
+                copyBtn.innerHTML = originalText;
+            }
+        });
+
+        // Drag & drop behavior print AOI
+        const dropZone = document.querySelector('label[for="fileInput"]');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('bg-blue-200'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('bg-blue-200'), false);
+        });
+        dropZone.addEventListener('drop', (e) => {
+            fileInput.files = e.dataTransfer.files;
+            fileInput.dispatchEvent(new Event('change'));
+        }, false);
+
+        // ==========================================
+        // APP 2: WETRANSFER SCRIPT
+        // ==========================================
+        const satelliteData = {
+            "Pleiades Neo": { res: ["30 cm"], raw: true }, "Pleiades": { res: ["50 cm"], raw: true },
+            "SPOT 6": { res: ["1,5 m"], raw: true }, "SPOT 5": { res: ["2,5 m", "5 m", "10 m"], raw: false },
+            "SPOT 4": { res: ["10 m"], raw: false }, "Jilin": { res: ["30 cm", "50 cm", "75 cm"], raw: true },
+            "Legion": { res: ["15 cm", "30 cm"], raw: true }, "WorldView 1": { res: ["50 cm"], raw: true },
+            "WorldView 2": { res: ["50 cm"], raw: true }, "WorldView 3": { res: ["30 cm"], raw: true },
+            "WorldView 4": { res: ["30 cm"], raw: true }, "Kompsat 3A": { res: ["40 cm"], raw: true },
+            "Kompsat 3": { res: ["70 cm"], raw: true }, "Kompsat 2": { res: ["1 m"], raw: true },
+            "GeoEye": { res: ["50 cm"], raw: true }, "QuickBird": { res: ["60 cm"], raw: true },
+            "SuperView": { res: ["50 cm"], raw: true }, "Beijin 3A": { res: ["50 cm"], raw: true },
+            "Beijin 3N3": { res: ["30 cm"], raw: true }, "Eros B": { res: ["70 cm"], raw: true },
+            "Planet": { res: ["3 m"], raw: true }, "Triplesat": { res: ["1 m"], raw: true },
+            "SkySat": { res: ["50 cm"], raw: true }, "RapidEye": { res: ["5 m"], raw: true },
+            "Gaofen 2": { res: ["80 cm"], raw: true }, "Ikonos": { res: ["80 cm"], raw: true },
+            "BlackSky": { res: ["80 cm", "1 m"], raw: true }, "Landsat 8 / 9": { res: ["15 m", "30 m"], raw: false },
+            "Landsat 4 / 5 / 7": { res: ["30 m"], raw: false }, "Sentinel 2": { res: ["10 m"], raw: false }
+        };
+
+        let wtCurrentType = 'img';
+
+        function setWtType(type) {
+            wtCurrentType = type;
+            document.querySelectorAll('.wt-type-btn').forEach(btn => {
+                btn.className = "wt-type-btn py-2 px-3 text-sm font-medium rounded-lg border-2 border-transparent bg-white shadow-sm text-slate-600 hover:bg-slate-100 transition-colors";
+            });
+            document.getElementById(`btn-type-${type}`).className = "wt-type-btn active py-2 px-3 text-sm font-medium rounded-lg border-2 border-blue-600 bg-blue-50 text-blue-700 transition-colors";
+
+            const blockImg = document.getElementById('block-image');
+            const blockAlt = document.getElementById('block-altimetry');
+
+            if (type === 'img') {
+                blockImg.classList.remove('hidden'); blockImg.classList.add('flex');
+                blockAlt.classList.add('hidden'); blockAlt.classList.remove('flex');
+            } else if (type === 'alt') {
+                blockAlt.classList.remove('hidden'); blockAlt.classList.add('flex');
+                blockImg.classList.add('hidden'); blockImg.classList.remove('flex');
+            } else if (type === 'combo') {
+                blockImg.classList.remove('hidden'); blockImg.classList.add('flex');
+                blockAlt.classList.remove('hidden'); blockAlt.classList.add('flex');
+            }
+            generateMessage();
+        }
+
+        function getSatOptionsHTML() {
+            let options = '';
+            for (const sat in satelliteData) options += `<option value="${sat}">${sat}</option>`;
+            return options;
+        }
+
+        function addImageEntry() {
+            const container = document.getElementById('images-container');
+            const entryCount = container.children.length;
+            const entry = document.createElement('div');
+            entry.className = "image-entry bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative flex flex-col gap-3 transition-all";
+            
+            let deleteBtn = entryCount > 0 ? `<button type="button" onclick="this.parentElement.remove(); generateMessage();" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors" title="Remover"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : '';
+
+            const today = new Date();
+            const dateEx = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+
+            entry.innerHTML = `
+                ${deleteBtn}
+                <div class="pr-8">
+                    <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Satélite</label>
+                    <select class="img-satellite w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" onchange="updateRes(this)">
+                        ${getSatOptionsHTML()}
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Resolução</label>
+                        <select class="img-resolution w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Data(s)</label>
+                        <input type="text" class="img-date w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: ${dateEx}">
+                    </div>
+                </div>
+            `;
+            container.appendChild(entry);
+            updateRes(entry.querySelector('.img-satellite'));
+        }
+
+        function updateRes(selectElement) {
+            const sat = selectElement.value;
+            const resSelect = selectElement.closest('.image-entry').querySelector('.img-resolution');
+            resSelect.innerHTML = '';
+            if (satelliteData[sat]) {
+                satelliteData[sat].res.forEach(res => {
+                    const option = document.createElement('option');
+                    option.value = res; option.textContent = res;
+                    resSelect.appendChild(option);
+                });
+            }
+            generateMessage();
+        }
+
+        function generateMessage() {
+            const fuso = document.getElementById('utm-zone').value;
+            const hemi = document.getElementById('utm-hemi').value;
+            const projecao = `UTM ${fuso} ${hemi === 'Sul' ? 'Sul' : 'Norte'} SIRGAS 2000`;
+            const altProduct = document.getElementById('alt-product').value;
+            const altRes = altProduct.includes('Neo') ? '5m' : '12m';
+            const altModel = document.getElementById('alt-model').value;
+            const obsText = document.getElementById('obs-text').value.trim();
+
+            const formatOptions = {
+                geotif: document.getElementById('fmt-geotif').checked, kmz: document.getElementById('fmt-kmz').checked,
+                ecw: document.getElementById('fmt-ecw').checked, dwg: document.getElementById('fmt-dwg').checked,
+                shp: document.getElementById('fmt-shp').checked, carta: document.getElementById('opt-carta').checked
+            };
+
+            let msg = `Prezado(a),\n\n`;
+            let imgBlocksText = '';
+            
+            document.querySelectorAll('.image-entry').forEach((entry, index, arr) => {
+                const sat = entry.querySelector('.img-satellite').value;
+                const res = entry.querySelector('.img-resolution').value;
+                const dataImg = entry.querySelector('.img-date').value.trim() || '[DATA NÃO INFORMADA]';
+                const hasRawData = satelliteData[sat] ? satelliteData[sat].raw : false;
+
+                imgBlocksText += getImagemBlock(sat, res, dataImg, projecao, hasRawData, formatOptions);
+                if (index < arr.length - 1) imgBlocksText += `\n`; 
+            });
+
+            if (wtCurrentType === 'img') msg += `Seguem pelo presente os arquivos digitais relativos ao fornecimento de:\n\n` + imgBlocksText;
+            else if (wtCurrentType === 'alt') msg += `Seguem os dados para atender sua demanda:\n\n` + getAltimetriaBlock(altProduct, altRes, altModel, projecao);
+            else if (wtCurrentType === 'combo') msg += `Seguem os dados para atender sua demanda:\n\n` + getAltimetriaBlock(altProduct, altRes, altModel, projecao) + `\n` + imgBlocksText;
+
+            msg += `\npara atender o seu pedido.\n`;
+            if (obsText) msg += `\nObservações:\n${obsText}\n`;
+            msg += `\nAtenciosamente,\n\nLaurent MARTIN\nDiretor\nENGESAT`;
+            
+            document.getElementById('wt-output').value = msg;
+        }
+
+        function getImagemBlock(sat, res, dataImg, projecao, hasRawData, formatOptions) {
+            let block = `- Imagem ${sat}\n`;
+            const isPanOnly = (sat === "WorldView 1" || sat === "Eros B");
+            if (hasRawData && !isPanOnly && !sat.includes("Landsat") && !sat.includes("Sentinel") && !sat.includes("SPOT 4") && !sat.includes("SPOT 5")) block += `- Modo PSM\n`;
+            block += `- ${res} de resolução espacial\n- Data(s) de aquisição: ${dataImg}\n- ${projecao}\n- Ortoretificada com parâmetros orbitais\n`;
+            if (isPanOnly) block += `- 1 banda (Pancromática)\n`;
+            else if (sat.includes("Landsat")) block += `- Cores naturais 432 ou 3 e 4 bandas\n`;
+            else block += `- 3 e 4 bandas espectrais\n`;
+            if (formatOptions.geotif) block += `- GeoTIFF\n`;
+            if (formatOptions.kmz) block += `- KMZ\n`;
+            if (formatOptions.ecw) block += `- ECW\n`;
+            if (formatOptions.dwg) block += `- DWG\n`;
+            if (formatOptions.shp) block += `- SHP\n`;
+            if (formatOptions.carta) block += `- Carta Imagem\n`;
+            block += `- 8 bits\n`;
+            if (isPanOnly) block += `- Imagem P&B (Pancromática)\n`;
+            else block += `- Cores naturais\n`;
+            block += `- Com e sem contraste\n`;
+            if (hasRawData) block += `- Dados brutos acompanham\n- Metadados da imagem original utilizada acompanham\n`;
+            else block += `- Metadados das imagens originais utilizadas acompanham\n`;
+            return block;
+        }
+
+        function getAltimetriaBlock(produto, resolucao, modelos, projecao) {
+            return `${produto}\n- Resolução espacial de ${resolucao}\n- ${modelos}\n- GeoTiff 32 bit floating point\n- Nuvem de pontos .las e .txt\n\n- Curvas de nível\n- 2 m de equidistância\n- shp, dwg e kml\n\n- ${projecao}\n- Sirgas 2000\n`;
+        }
+
+        function copyWtToClipboard() {
+            const output = document.getElementById('wt-output');
+            output.select();
+            document.execCommand('copy');
+            const toast = document.getElementById('wt-toast');
+            toast.classList.replace('opacity-0', 'opacity-100');
+            setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 2500);
+        }
+
+        // ==========================================
+        // APP 3: README SCRIPT
+        // ==========================================
+        const folderInput = document.getElementById('folderInput');
+        const btnSelectFolder = document.getElementById('btnSelectFolder');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const resultArea = document.getElementById('resultArea');
+        const previewText = document.getElementById('previewText');
+        const btnDownloadTxt = document.getElementById('btnDownloadTxt');
+        const btnDownloadPdf = document.getElementById('btnDownloadPdf');
+
+        let generatedText = "";
+        let projectName = "Projeto";
+        let rootDirHandle = null; 
+
+        btnSelectFolder.addEventListener('click', async () => {
+            if (window.showDirectoryPicker) {
+                try {
+                    rootDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                    projectName = rootDirHandle.name;
+                    btnSelectFolder.classList.add('hidden');
+                    loadingIndicator.classList.remove('hidden');
+                    loadingIndicator.classList.add('flex');
+                    resultArea.classList.add('hidden');
+                    const files = [];
+                    await readDirectory(rootDirHandle, projectName, files);
+                    setTimeout(() => processFiles(files), 100);
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.warn("Fallback directory picker", err);
+                        rootDirHandle = null;
+                        folderInput.click();
+                    }
+                }
+            } else {
+                folderInput.click();
+            }
+        });
+
+        async function readDirectory(dirHandle, path, filesList) {
+            for await (const entry of dirHandle.values()) {
+                if (entry.kind === 'file') {
+                    const file = await entry.getFile();
+                    file.customPath = path + '/' + entry.name;
+                    filesList.push(file);
+                } else if (entry.kind === 'directory') {
+                    await readDirectory(entry, path + '/' + entry.name, filesList);
+                }
+            }
+        }
+
+        folderInput.addEventListener('change', async (event) => {
+            const files = event.target.files;
+            if (files.length === 0) return;
+            rootDirHandle = null; 
+            projectName = files[0].webkitRelativePath.split('/')[0] || "Projeto";
+            btnSelectFolder.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
+            loadingIndicator.classList.add('flex');
+            resultArea.classList.add('hidden');
+            setTimeout(() => processFiles(files), 100);
+        });
+
+        function normalizeString(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        }
+
+        function groupFiles(fileList) {
+            let groups = {};
+            fileList.forEach(f => {
+                const parts = f.name.split('.');
+                const ext = parts.length > 1 ? parts.pop().toLowerCase() : '';
+                const baseName = parts.join('.');
+                let key = baseName.replace(/\b(geo|utm(?:\s*\d{1,2}[a-z]?)?)\b/gi, '').replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+                if (!groups[key]) groups[key] = { baseNames: new Set(), representativeName: baseName.replace(/\b(geo|utm(?:\s*\d{1,2}[a-z]?)?)\b/gi, '').replace(/\s+/g, ' ').trim(), exts: new Set(), crs: new Set(), subfolder: f.subfolder };
+                groups[key].baseNames.add(baseName);
+                if (ext) groups[key].exts.add(ext);
+
+                if (/\bgeo\b/i.test(baseName)) groups[key].crs.add("Geográficas (Geo)");
+                let utmMatch = baseName.match(/\b(utm(?:\s*\d{1,2}[a-z]?)?)\b/i);
+                if (utmMatch) groups[key].crs.add(utmMatch[1].toUpperCase());
+            });
+            return Object.values(groups).map(g => ({ baseNames: Array.from(g.baseNames), representativeName: g.representativeName, exts: Array.from(g.exts), crs: Array.from(g.crs), subfolder: g.subfolder }));
+        }
+
+        function decodeFilename(name) {
+            let details = [];
+            let n = name.toLowerCase();
+
+            if (n.includes("mdt")) details.push("Produto: Modelo Digital de Terreno (MDT).");
+            else if (n.includes("mds")) details.push("Produto: Modelo Digital de Superfície (MDS).");
+            
+            let cnMatch = name.match(/\bcn\s*(\d+(?:,\d+)?)\s*m\b/i) || name.match(/curvas?\s*de\s*n[íi]vel\s*(\d+(?:,\d+)?)\s*m/i);
+            if (cnMatch) details.push(`Produto: Curvas de Nível (Equidistância: ${cnMatch[1]}m).`);
+            else if (/\bcn\b/i.test(name)) details.push("Produto: Curvas de Nível.");
+
+            if (/\bnp\b/i.test(name) || n.includes("nuvem de pontos")) details.push("Produto: Nuvem de Pontos.");
+
+            const satelliteRules = [
+                { regex: /worlddem[\s-]*neo/i, name: "WorldDEM Neo" }, { regex: /worlddem/i, name: "WorldDEM" },
+                { regex: /pl[eé]iades[\s-]*neo/i, name: "Pléiades Neo" }, { regex: /pl[eé]iades/i, name: "Pléiades" },
+                { regex: /worldview[\s-]*([1-4])/i, name: "WorldView $1" }, { regex: /worldview/i, name: "WorldView" },
+                { regex: /spot[\s-]*([4-6])/i, name: "SPOT $1" }, { regex: /spot/i, name: "SPOT" },
+                { regex: /landsat[\s-]*([4578])/i, name: "Landsat $1" }, { regex: /sentinel[\s-]*(2)/i, name: "Sentinel $1" }
+            ];
+            for (let rule of satelliteRules) {
+                let match = n.match(rule.regex);
+                if (match) { details.push(`Satélite/Fonte: ${rule.name.replace('$1', match[1]||'')}`); break; }
+            }
+
+            let resMatch = name.match(/(\d+(?:,\d+)?\s*(?:cm|m(?:etros?)?))/i);
+            if (resMatch) details.push(`Resolução: ${resMatch[1].toLowerCase()}`);
+            if (n.includes("psm")) details.push("Tipo de Fusão: PSM (Pan-sharpened).");
+            if (n.includes("orto")) details.push("Processo: Ortorretificada.");
+
+            return details;
+        }
+
+        function analyzeGroup(group) {
+            let descricao = "", software = "", notas = [];
+            let decoded = decodeFilename(group.representativeName);
+            const hasExt = (e) => group.exts.includes(e);
+            
+            if (group.crs.length > 0) notas.push(`Projeções disponíveis: ${group.crs.join(" e ")}.`);
+
+            if (hasExt('shp')) {
+                descricao = "Vetor Geográfico (Shapefile)."; software = "QGIS, ArcGIS ou Civil 3D.";
+                notas.push("Atenção: Acompanha arquivos de suporte essenciais (.shx, .dbf, .prj). Mantenha todos na mesma pasta!");
+            } else if (hasExt('dwg') || hasExt('dxf')) {
+                descricao = "Desenho Técnico CAD."; software = "AutoCAD, ZWCAD, Civil 3D.";
+                notas.push("Dica Importante: Mantenha este arquivo na mesma pasta das imagens correspondentes para correta exibição.");
+            } else if (hasExt('tif') || hasExt('tiff') || hasExt('ecw') || hasExt('jp2')) {
+                descricao = "Imagem Matricial Georreferenciada."; software = "QGIS, ArcGIS, Softwares CAD.";
+                if (hasExt('tfw') || hasExt('prj') || hasExt('xml') || hasExt('aux')) notas.push("Não apague os arquivos auxiliares (metadados).");
+            } else if (hasExt('pdf')) {
+                descricao = "Documento em PDF pronto para visualizar e imprimir."; software = "Leitor de PDF.";
+            } else if (hasExt('kmz') || hasExt('kml')) {
+                descricao = "Arquivo de Visualização Geográfica (Leve)."; software = "Google Earth.";
+            }
+
+            return { descricao, software, notas, decoded };
+        }
+
+        function processFiles(files) {
+            const projectData = { interesse: [], brutos: [], processados: [] };
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.name.startsWith('.')) continue;
+                const pathToUse = file.customPath || file.webkitRelativePath || file.name;
+                const pathParts = pathToUse.split('/');
+                let belongsTo = null; let subFolderName = "";
+
+                for (let p = 1; p < pathParts.length - 1; p++) {
+                    const normPart = normalizeString(pathParts[p]);
+                    if (normPart.includes("area de interesse")) belongsTo = 'interesse';
+                    else if (normPart.includes("dados brutos")) belongsTo = 'brutos';
+                    else if (normPart.includes("dados processados")) {
+                        belongsTo = 'processados';
+                        if (p + 1 < pathParts.length - 1) subFolderName = pathParts[p+1];
+                    }
+                    if (belongsTo) break;
+                }
+                if (belongsTo) projectData[belongsTo].push({ name: file.name, path: pathToUse, subfolder: subFolderName });
+            }
+            generateReport(projectData);
+        }
+
+        function generateReport(data) {
+            let texto = "=======================================================\n";
+            texto += "        GUIA DO PROJETO - INSTRUÇÕES DE USO\n";
+            texto += "=======================================================\n\n";
+            texto += "Olá! Este documento foi criado para ajudar você a entender o que é cada arquivo entregue neste projeto.\n\n";
+
+            texto += "-------------------------------------------------------\n";
+            texto += " 1. ÁREA DE INTERESSE\n";
+            texto += "-------------------------------------------------------\n";
+            if (data.interesse.length === 0) texto += "Nenhum arquivo encontrado nesta pasta.\n\n";
+            else {
+                groupFiles(data.interesse).forEach(g => {
+                    texto += `[Arquivo] ${g.representativeName} (${g.exts.map(e => `.${e}`).join(", ")})\n`;
+                });
+                texto += "\n";
+            }
+
+            texto += "-------------------------------------------------------\n";
+            texto += " 2. DADOS BRUTOS\n";
+            texto += "-------------------------------------------------------\n";
+            if (data.brutos.length === 0) texto += "Nenhum arquivo encontrado nesta pasta.\n\n";
+            else texto += `Identificamos ${groupFiles(data.brutos).length} conjunto(s) de dados brutos nesta pasta.\n\n`;
+
+            texto += "-------------------------------------------------------\n";
+            texto += " 3. DADOS PROCESSADOS (A Pasta Mais Importante!)\n";
+            texto += "-------------------------------------------------------\n";
+            if (data.processados.length === 0) texto += "Nenhum arquivo processado encontrado nesta pasta.\n\n";
+            else {
+                const groupsProcessados = groupFiles(data.processados);
+                const groupedBySub = {};
+                groupsProcessados.forEach(g => {
+                    const sub = g.subfolder || "Arquivos Principais";
+                    if (!groupedBySub[sub]) groupedBySub[sub] = [];
+                    groupedBySub[sub].push(g);
+                });
+
+                for (const sub in groupedBySub) {
+                    if(sub !== "Arquivos Principais") texto += `\n>> SUBPASTA: ${sub.toUpperCase()}\n`;
+                    groupedBySub[sub].forEach(g => {
+                        const analysis = analyzeGroup(g);
+                        if(!analysis.descricao) return; 
+                        texto += `[Projeto] ${g.representativeName}\n`;
+                        texto += `  => Extensões: ${g.exts.map(e => `.${e}`).join(", ")}\n`;
+                        texto += `  => O que é:   ${analysis.descricao}\n`;
+                        if (analysis.software) texto += `  => Abrir no:  ${analysis.software}\n`;
+                        if (analysis.decoded.length > 0) {
+                            texto += `  => Detalhes identificados no nome:\n`;
+                            analysis.decoded.forEach(d => texto += `     - ${d}\n`);
+                        }
+                        if (analysis.notas.length > 0) analysis.notas.forEach(n => texto += `  => ${n}\n`);
+                        texto += `\n`;
+                    });
+                }
+            }
+            texto += "=======================================================\n";
+            texto += "Dica final: Em caso de lentidão ao abrir imagens gigantes, crie 'Pirâmides' ou utilize arquivos .ECW (se fornecidos).\n";
+
+            generatedText = texto;
+            previewText.value = texto;
+            
+            loadingIndicator.classList.add('hidden');
+            loadingIndicator.classList.remove('flex');
+            btnSelectFolder.classList.remove('hidden');
+            btnSelectFolder.innerHTML = '<i class="fas fa-folder-open text-xl"></i> Selecionar Outra Pasta';
+            resultArea.classList.remove('hidden');
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function showSaveSuccess(message) {
+            const statusDiv = document.getElementById('saveStatus');
+            statusDiv.innerHTML = message;
+            statusDiv.classList.remove('hidden');
+            setTimeout(() => { statusDiv.classList.add('hidden'); }, 5000);
+        }
+
+        btnDownloadTxt.addEventListener('click', async () => {
+            if (!generatedText) return;
+            const fileName = `README - Instruções - ${projectName}.txt`;
+            if (rootDirHandle) {
+                try {
+                    const fileHandle = await rootDirHandle.getFileHandle(fileName, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(generatedText);
+                    await writable.close();
+                    showSaveSuccess(`<i class="fas fa-check-circle"></i> Arquivo TXT salvo direto na pasta!`);
+                    return;
+                } catch (e) { alert("Bloqueado. Salvando em Downloads."); }
+            }
+            const blob = new Blob([generatedText], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            a.click();
+        });
+
+        btnDownloadPdf.addEventListener('click', async () => {
+            if (!generatedText) return;
+            const originalBtnText = btnDownloadPdf.innerHTML;
+            btnDownloadPdf.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
+            btnDownloadPdf.disabled = true;
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const marginX = 20; let cursorY = 25; 
+            const pageWidth = doc.internal.pageSize.width;
+            const maxLineWidth = pageWidth - (marginX * 2);
+
+            const checkPageBreak = (neededSpace) => {
+                if (cursorY + neededSpace > doc.internal.pageSize.height - 20) { doc.addPage(); cursorY = 25; }
+            };
+
+            const lines = generatedText.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trimEnd();
+                if (line.startsWith('===') || line.startsWith('---')) continue;
+                if (line.trim() === '') { cursorY += 4; checkPageBreak(0); continue; }
+
+                let fontSize = 10, fontStyle = "normal", textColor = [60, 60, 60], indent = 0, isTitle = false, drawLineBelow = false;
+                line = line.replace(/=>/g, '>'); 
+
+                if (line.includes('GUIA DO PROJETO')) { fontSize = 16; fontStyle = "bold"; textColor = [37, 99, 235]; isTitle = true; cursorY += 5; } 
+                else if (line.match(/^\s*[123]\./)) { fontSize = 12; fontStyle = "bold"; textColor = [37, 99, 235]; drawLineBelow = true; cursorY += 8; } 
+                else if (line.startsWith('>> SUBPASTA:')) { line = line.replace('>> SUBPASTA:', 'Pasta:'); fontSize = 11; fontStyle = "bold"; textColor = [30, 41, 59]; cursorY += 6; } 
+                else if (line.startsWith('[Arquivo]') || line.startsWith('[Projeto]')) { line = line.replace(/\[(Arquivo|Projeto)\]\s*/, ''); fontSize = 10; fontStyle = "bold"; textColor = [15, 23, 42]; cursorY += 4; } 
+                else if (line.trim().startsWith('>')) { indent = 5; textColor = [71, 85, 105]; } 
+                else if (line.trim().startsWith('-')) { fontStyle = "italic"; textColor = [100, 116, 139]; indent = 10; } 
+                else if (line.startsWith('Dica final:')) { fontStyle = "bold"; textColor = [220, 38, 38]; cursorY += 6; }
+
+                doc.setFont("helvetica", fontStyle); doc.setFontSize(fontSize); doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+
+                const textLines = doc.splitTextToSize(line, maxLineWidth - indent);
+                const lineSpacing = (fontSize * 0.4) + 1;
+
+                for (let j = 0; j < textLines.length; j++) {
+                    checkPageBreak(lineSpacing);
+                    if (isTitle) doc.text(textLines[j], (pageWidth - doc.getTextWidth(textLines[j])) / 2, cursorY);
+                    else doc.text(textLines[j], marginX + indent, cursorY);
+                    cursorY += lineSpacing;
+                }
+                if (drawLineBelow) { cursorY += 2; doc.setDrawColor(37, 99, 235); doc.setLineWidth(0.5); doc.line(marginX, cursorY, pageWidth - marginX, cursorY); cursorY += 4; }
+            }
+            
+            const fileName = `README - Instruções - ${projectName}.pdf`;
+            if (rootDirHandle) {
+                try {
+                    const pdfBlob = doc.output('blob');
+                    const fileHandle = await rootDirHandle.getFileHandle(fileName, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(pdfBlob);
+                    await writable.close();
+                    showSaveSuccess(`<i class="fas fa-check-circle"></i> PDF salvo direto na pasta!`);
+                    btnDownloadPdf.innerHTML = originalBtnText; btnDownloadPdf.disabled = false;
+                    return;
+                } catch (e) { alert("Bloqueado. Salvando em Downloads."); }
+            }
+            doc.save(fileName);
+            btnDownloadPdf.innerHTML = originalBtnText; btnDownloadPdf.disabled = false;
+        });
+
+        // ==========================================
+        // INIT GERAL
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa WeTransfer
+            addImageEntry();
+            document.getElementById('wetransfer-form-panel').addEventListener('input', generateMessage);
+            document.getElementById('wetransfer-form-panel').addEventListener('change', generateMessage);
+            generateMessage();
+            
+            // Abre a primeira aba
+            switchTab('tab-print-aoi');
+        });
+
+    </script>
+</body>
+</html>
