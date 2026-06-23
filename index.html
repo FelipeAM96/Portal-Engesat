@@ -192,6 +192,14 @@
                             <option value="MDS">Apenas MDS</option>
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Curvas de Nível</label>
+                        <select id="alt-contour" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="1 m">1 m de equidistância</option>
+                            <option value="2 m" selected>2 m de equidistância</option>
+                            <option value="1 m e 2 m">1 m e 2 m de equidistância</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div id="block-image" class="flex flex-col gap-4">
@@ -507,11 +515,23 @@
                     layers: [osmLayer] // OSM como padrão
                 });
                 
-                // Adiciona o controle de seleção de mapa base no canto superior esquerdo
+                // Adiciona o controle de seleção de mapa base na visualização (Será ocultado na exportação)
                 L.control.layers({
                     "Mapa Base (OSM)": osmLayer,
                     "Satélite (Esri)": satLayer
                 }, null, { position: 'topleft' }).addTo(map);
+
+                // Adiciona a logo da Engesat no canto superior esquerdo
+                const LogoControl = L.Control.extend({
+                    options: { position: 'topleft' },
+                    onAdd: function () {
+                        const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                        div.style.cssText = 'background-color: rgba(255,255,255,0.8); padding: 4px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); pointer-events: none; margin-top: 10px; margin-left: 10px;';
+                        div.innerHTML = `<img src="img/Engesat_logo.png" alt="Engesat" style="height: 35px; width: auto;" onerror="this.style.display='none'">`;
+                        return div;
+                    }
+                });
+                map.addControl(new LogoControl());
 
                 L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(map);
 
@@ -581,7 +601,10 @@
         async function generateMapCanvas() {
             const mapNode = document.getElementById('map');
             const zoomControl = document.querySelector('.leaflet-control-zoom');
+            const layersControl = document.querySelector('.leaflet-control-layers'); // Pega o botão de seleção de base map
+
             if (zoomControl) zoomControl.style.display = 'none';
+            if (layersControl) layersControl.style.display = 'none'; // Esconde antes de capturar
 
             const originalScrollX = window.scrollX;
             const originalScrollY = window.scrollY;
@@ -596,6 +619,7 @@
                 return canvas;
             } finally {
                 if (zoomControl) zoomControl.style.display = '';
+                if (layersControl) layersControl.style.display = ''; // Devolve o botão após a captura
                 window.scrollTo(originalScrollX, originalScrollY);
             }
         }
@@ -782,6 +806,7 @@
             const altProduct = document.getElementById('alt-product').value;
             const altRes = altProduct.includes('Neo') ? '5m' : '12m';
             const altModel = document.getElementById('alt-model').value;
+            const altContour = document.getElementById('alt-contour') ? document.getElementById('alt-contour').value : '2 m';
             const obsText = document.getElementById('obs-text').value.trim();
 
             const formatOptions = {
@@ -804,8 +829,8 @@
             });
 
             if (wtCurrentType === 'img') msg += `Seguem pelo presente os arquivos digitais relativos ao fornecimento de:\n\n` + imgBlocksText;
-            else if (wtCurrentType === 'alt') msg += `Seguem os dados para atender sua demanda:\n\n` + getAltimetriaBlock(altProduct, altRes, altModel, projecao);
-            else if (wtCurrentType === 'combo') msg += `Seguem os dados para atender sua demanda:\n\n` + getAltimetriaBlock(altProduct, altRes, altModel, projecao) + `\n` + imgBlocksText;
+            else if (wtCurrentType === 'alt') msg += `Seguem os dados para atender sua demanda:\n\n` + getAltimetriaBlock(altProduct, altRes, altModel, projecao, altContour);
+            else if (wtCurrentType === 'combo') msg += `Seguem os dados para atender sua demanda:\n\n` + getAltimetriaBlock(altProduct, altRes, altModel, projecao, altContour) + `\n` + imgBlocksText;
 
             msg += `\npara atender o seu pedido.\n`;
             if (obsText) msg += `\nObservações:\n${obsText}\n`;
@@ -837,8 +862,8 @@
             return block;
         }
 
-        function getAltimetriaBlock(produto, resolucao, modelos, projecao) {
-            return `${produto}\n- Resolução espacial de ${resolucao}\n- ${modelos}\n- GeoTiff 32 bit floating point\n- Nuvem de pontos .las e .txt\n\n- Curvas de nível\n- 2 m de equidistância\n- shp, dwg e kml\n\n- ${projecao}\n- Sirgas 2000\n`;
+        function getAltimetriaBlock(produto, resolucao, modelos, projecao, contour) {
+            return `${produto}\n- Resolução espacial de ${resolucao}\n- ${modelos}\n- GeoTiff 32 bit floating point\n- Nuvem de pontos .las e .txt\n\n- Curvas de nível\n- ${contour} de equidistância\n- shp, dwg e kml\n\n- ${projecao}\n- Sirgas 2000\n`;
         }
 
         function copyWtToClipboard() {
@@ -939,21 +964,31 @@
             let details = [];
             let n = name.toLowerCase();
 
-            if (n.includes("mdt")) details.push("Produto: Modelo Digital de Terreno (MDT).");
-            else if (n.includes("mds")) details.push("Produto: Modelo Digital de Superfície (MDS).");
+            if (n.includes("mdt")) details.push("Produto: Modelo Digital de Terreno (MDT) - Representa o relevo do solo nu.");
+            else if (n.includes("mds")) details.push("Produto: Modelo Digital de Superfície (MDS) - Inclui árvores, galpões e construções.");
             
             let cnMatch = name.match(/\bcn\s*(\d+(?:,\d+)?)\s*m\b/i) || name.match(/curvas?\s*de\s*n[íi]vel\s*(\d+(?:,\d+)?)\s*m/i);
-            if (cnMatch) details.push(`Produto: Curvas de Nível (Equidistância: ${cnMatch[1]}m).`);
+            if (cnMatch) details.push(`Produto: Curvas de Nível (Equidistância: ${cnMatch[1]} metros).`);
             else if (/\bcn\b/i.test(name)) details.push("Produto: Curvas de Nível.");
 
-            if (/\bnp\b/i.test(name) || n.includes("nuvem de pontos")) details.push("Produto: Nuvem de Pontos.");
+            if (/\bnp\b/i.test(name) || n.includes("nuvem de pontos")) details.push("Produto: Nuvem de Pontos (Representação 3D densa).");
 
             const satelliteRules = [
                 { regex: /worlddem[\s-]*neo/i, name: "WorldDEM Neo" }, { regex: /worlddem/i, name: "WorldDEM" },
                 { regex: /pl[eé]iades[\s-]*neo/i, name: "Pléiades Neo" }, { regex: /pl[eé]iades/i, name: "Pléiades" },
                 { regex: /worldview[\s-]*([1-4])/i, name: "WorldView $1" }, { regex: /worldview/i, name: "WorldView" },
                 { regex: /spot[\s-]*([4-6])/i, name: "SPOT $1" }, { regex: /spot/i, name: "SPOT" },
-                { regex: /landsat[\s-]*([4578])/i, name: "Landsat $1" }, { regex: /sentinel[\s-]*(2)/i, name: "Sentinel $1" }
+                { regex: /jilin/i, name: "Jilin" }, { regex: /eros[\s-]*b/i, name: "Eros B" },
+                { regex: /legion/i, name: "Legion" }, { regex: /kompsat[\s-]*(3a|3|2)/i, name: "Kompsat $1" },
+                { regex: /kompsat/i, name: "Kompsat" }, { regex: /beijin[g]?[\s-]*(3n3|3a)/i, name: "Beijing $1" },
+                { regex: /beijin[g]?/i, name: "Beijing" }, { regex: /geoeye/i, name: "GeoEye" },
+                { regex: /quickbird/i, name: "QuickBird" }, { regex: /planet/i, name: "Planet" },
+                { regex: /triplesat/i, name: "Triplesat" }, { regex: /superview/i, name: "SuperView" },
+                { regex: /skysat/i, name: "SkySat" }, { regex: /rapideye/i, name: "RapidEye" },
+                { regex: /gaofen[\s-]*(2)/i, name: "Gaofen $1" }, { regex: /gaofen/i, name: "Gaofen" },
+                { regex: /ikonos/i, name: "Ikonos" }, { regex: /blacksky/i, name: "BlackSky" },
+                { regex: /landsat[\s-]*([4578])/i, name: "Landsat $1" }, { regex: /landsat/i, name: "Landsat" },
+                { regex: /sentinel[\s-]*(2)/i, name: "Sentinel $1" }, { regex: /sentinel/i, name: "Sentinel" }
             ];
             for (let rule of satelliteRules) {
                 let match = n.match(rule.regex);
@@ -962,32 +997,85 @@
 
             let resMatch = name.match(/(\d+(?:,\d+)?\s*(?:cm|m(?:etros?)?))/i);
             if (resMatch) details.push(`Resolução: ${resMatch[1].toLowerCase()}`);
-            if (n.includes("psm")) details.push("Tipo de Fusão: PSM (Pan-sharpened).");
-            if (n.includes("orto")) details.push("Processo: Ortorretificada.");
+
+            let dateMatch = name.match(/(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
+            if (dateMatch) details.push(`Captura: ${dateMatch[1]}`);
+
+            if (n.includes("psm")) details.push("Tipo de Fusão: PSM (Pan-sharpened) - Mistura de banda alta resolução com cores.");
+            if (n.includes("orto")) details.push("Processo: Ortorretificada (Corrigida geograficamente para permitir medições precisas).");
+
+            if (n.includes("sirgas 2000") || n.includes("sirgas2000")) details.push("Datum: SIRGAS 2000");
+            else if (n.includes("wgs 84") || n.includes("wgs84")) details.push("Datum: WGS 84");
+
+            let bitMatch = name.match(/(\d+)\s*bits?/i);
+            if (bitMatch) details.push(`Radiometria: ${bitMatch[1]} bits`);
+
+            let bandMatch = name.match(/(\d+)\s*bandas?/i);
+            if (bandMatch) details.push(`Bandas: ${bandMatch[1]} bandas de cor`);
+
+            if (n.includes("cores naturais")) details.push("Padrão de Cor: Cores Naturais (Visão real do olho humano).");
+            else if (n.includes("falsa cor")) details.push("Padrão de Cor: Falsa Cor (Usado para análise de vegetação, solo, etc).");
+
+            if (n.includes("com contraste")) details.push("Tratamento: Com Contraste (Cores melhoradas e prontas para uso visual/estético).");
+            else if (n.includes("sem contraste")) details.push("Tratamento: Sem Contraste (Cores puras, ideais para cálculos matemáticos em softwares).");
 
             return details;
         }
 
         function analyzeGroup(group) {
-            let descricao = "", software = "", notas = [];
+            let descricao = "";
+            let software = "";
+            let notas = [];
             let decoded = decodeFilename(group.representativeName);
+
             const hasExt = (e) => group.exts.includes(e);
-            
-            if (group.crs.length > 0) notas.push(`Projeções disponíveis: ${group.crs.join(" e ")}.`);
+            const subfolderLower = normalizeString(group.subfolder || "");
+
+            if (group.crs.length > 0) {
+                notas.push(`Projeções disponíveis neste conjunto: ${group.crs.join(" e ")}. (Escolha a que melhor se adapta ao seu projeto ou software).`);
+            }
 
             if (hasExt('shp')) {
-                descricao = "Vetor Geográfico (Shapefile)."; software = "QGIS, ArcGIS ou Civil 3D.";
-                notas.push("Atenção: Acompanha arquivos de suporte essenciais (.shx, .dbf, .prj). Mantenha todos na mesma pasta!");
+                descricao = "Vetor Geográfico (Shapefile). Contém geometria de áreas, linhas ou marcações.";
+                software = "QGIS, ArcGIS ou Civil 3D.";
+                notas.push("Atenção: Acompanha arquivos essenciais de suporte (como .shx, .dbf, .prj). Eles guardam as tabelas e coordenadas. Mantenha todos na mesma pasta!");
+            } else if (hasExt('las') || hasExt('laz') || (hasExt('txt') && (subfolderLower.includes('nuvem') || subfolderLower.includes('np')))) {
+                descricao = "Nuvem de Pontos (Representação tridimensional de altíssima densidade)."; 
+                software = "Global Mapper, Civil 3D, QGIS, CloudCompare.";
+                notas.push("Atenção: Arquivo tridimensional de alta densidade.");
             } else if (hasExt('dwg') || hasExt('dxf')) {
-                descricao = "Desenho Técnico CAD."; software = "AutoCAD, ZWCAD, Civil 3D.";
-                notas.push("Dica Importante: Mantenha este arquivo na mesma pasta das imagens correspondentes para correta exibição.");
+                descricao = "Desenho Técnico CAD.";
+                software = "AutoCAD, ZWCAD, Civil 3D.";
+                notas.push("Dica Importante: Para que o DWG carregue as imagens junto com o desenho, mantenha este arquivo SEMPRE na mesma pasta da imagem .TIF correspondente.");
             } else if (hasExt('tif') || hasExt('tiff') || hasExt('ecw') || hasExt('jp2')) {
-                descricao = "Imagem Matricial Georreferenciada."; software = "QGIS, ArcGIS, Softwares CAD.";
-                if (hasExt('tfw') || hasExt('prj') || hasExt('xml') || hasExt('aux')) notas.push("Não apague os arquivos auxiliares (metadados).");
+                descricao = "Imagem Matricial Georreferenciada (Satélite ou Aérea).";
+                software = "QGIS, ArcGIS, Global Mapper, Softwares CAD.";
+                if (hasExt('tfw') || hasExt('prj') || hasExt('xml') || hasExt('aux')) {
+                    notas.push("Atenção: Contém arquivos de metadados (.tfw, .prj, etc) que indicam ao software o local exato da imagem no planeta. Não os apague.");
+                }
             } else if (hasExt('pdf')) {
-                descricao = "Documento em PDF pronto para visualizar e imprimir."; software = "Leitor de PDF.";
+                if (group.baseNames.some(name => name.toLowerCase().includes('metadado') || name.toLowerCase().includes('relatorio'))) {
+                    descricao = "Documento Textual / Metadados (Informações técnicas sobre o voo/satélite).";
+                } else {
+                    descricao = "Carta Imagem ou Relatório (Documento em PDF pronto para visualizar e imprimir).";
+                }
+                software = "Leitor de PDF (Adobe) ou qualquer Navegador Web.";
             } else if (hasExt('kmz') || hasExt('kml')) {
-                descricao = "Arquivo de Visualização Geográfica (Leve)."; software = "Google Earth.";
+                descricao = "Arquivo de Visualização Geográfica (Leve e rápido).";
+                software = "Google Earth (Basta dar dois cliques).";
+            } else if (hasExt('txt') || hasExt('xml')) {
+                descricao = "Metadados de Suporte (Informações de calibração ou texto).";
+                software = "Bloco de Notas.";
+            }
+
+            if (subfolderLower.includes('mds')) {
+                notas.push("Definição (MDS): Modelo Digital de Superfície. Representa a elevação incluindo tudo sobre a terra (árvores, galpões).");
+            } else if (subfolderLower.includes('mdt')) {
+                notas.push("Definição (MDT): Modelo Digital de Terreno. Relevo do solo nu, como se tudo que estivesse em cima fosse removido.");
+            } else if (subfolderLower.includes('curva') || subfolderLower.includes('nivel')) {
+                notas.push("Definição: Curvas de Nível. Representam a declividade e altimetria.");
+            } else if (subfolderLower.includes('nuvem')) {
+                notas.push("Definição: Nuvem de Pontos. Representação tridimensional de altíssima densidade.");
             }
 
             return { descricao, software, notas, decoded };
@@ -1021,15 +1109,19 @@
             let texto = "=======================================================\n";
             texto += "        GUIA DO PROJETO - INSTRUÇÕES DE USO\n";
             texto += "=======================================================\n\n";
-            texto += "Olá! Este documento foi criado para ajudar você a entender o que é cada arquivo entregue neste projeto.\n\n";
+            texto += "Olá! Este documento foi criado para ajudar você a entender o que é cada arquivo entregue neste projeto de forma fácil e rápida.\n\n";
 
             texto += "-------------------------------------------------------\n";
             texto += " 1. ÁREA DE INTERESSE\n";
             texto += "-------------------------------------------------------\n";
-            if (data.interesse.length === 0) texto += "Nenhum arquivo encontrado nesta pasta.\n\n";
-            else {
+            texto += "Contém o perímetro exato (polígono) que usamos como limite para buscar e processar as imagens.\n\n";
+
+            if (data.interesse.length === 0) {
+                texto += "Nenhum arquivo encontrado nesta pasta.\n\n";
+            } else {
                 groupFiles(data.interesse).forEach(g => {
-                    texto += `[Arquivo] ${g.representativeName} (${g.exts.map(e => `.${e}`).join(", ")})\n`;
+                    let extStr = g.exts.map(e => `.${e}`).join(", ");
+                    texto += `[Arquivo] ${g.representativeName} (${extStr})\n`;
                 });
                 texto += "\n";
             }
@@ -1037,16 +1129,26 @@
             texto += "-------------------------------------------------------\n";
             texto += " 2. DADOS BRUTOS\n";
             texto += "-------------------------------------------------------\n";
-            if (data.brutos.length === 0) texto += "Nenhum arquivo encontrado nesta pasta.\n\n";
-            else texto += `Identificamos ${groupFiles(data.brutos).length} conjunto(s) de dados brutos nesta pasta.\n\n`;
+            texto += "Arquivos originais e metadados crus que vieram do satélite/sensor antes de passarem pelos nossos tratamentos.\n";
+            texto += "Importante: Se você não é um especialista que deseja refazer os processos do zero, PODE IGNORAR ESTA PASTA. Seu foco deve ser a pasta de 'Dados Processados'.\n\n";
+
+            if (data.brutos.length === 0) {
+                texto += "Nenhum arquivo encontrado nesta pasta.\n\n";
+            } else {
+                texto += `Identificamos ${groupFiles(data.brutos).length} conjunto(s) de dados brutos nesta pasta.\n\n`;
+            }
 
             texto += "-------------------------------------------------------\n";
             texto += " 3. DADOS PROCESSADOS (A Pasta Mais Importante!)\n";
             texto += "-------------------------------------------------------\n";
-            if (data.processados.length === 0) texto += "Nenhum arquivo processado encontrado nesta pasta.\n\n";
-            else {
+            texto += "Aqui estão os produtos finais. Estes são os arquivos prontos e ajustados que sua equipe irá utilizar no dia a dia.\n\n";
+
+            if (data.processados.length === 0) {
+                texto += "Nenhum arquivo processado encontrado nesta pasta.\n\n";
+            } else {
                 const groupsProcessados = groupFiles(data.processados);
                 const groupedBySub = {};
+                
                 groupsProcessados.forEach(g => {
                     const sub = g.subfolder || "Arquivos Principais";
                     if (!groupedBySub[sub]) groupedBySub[sub] = [];
@@ -1054,26 +1156,44 @@
                 });
 
                 for (const sub in groupedBySub) {
-                    if(sub !== "Arquivos Principais") texto += `\n>> SUBPASTA: ${sub.toUpperCase()}\n`;
+                    if(sub !== "Arquivos Principais") {
+                        texto += `\n>> SUBPASTA: ${sub.toUpperCase()}\n`;
+                    }
+                    
                     groupedBySub[sub].forEach(g => {
                         const analysis = analyzeGroup(g);
                         if(!analysis.descricao) return; 
+                        
+                        let extsStr = g.exts.map(e => `.${e}`).join(", ");
+                        
                         texto += `[Projeto] ${g.representativeName}\n`;
-                        texto += `  => Extensões: ${g.exts.map(e => `.${e}`).join(", ")}\n`;
+                        texto += `  => Extensões: ${extsStr}\n`;
                         texto += `  => O que é:   ${analysis.descricao}\n`;
-                        if (analysis.software) texto += `  => Abrir no:  ${analysis.software}\n`;
+                        if (analysis.software) {
+                            texto += `  => Abrir no:  ${analysis.software}\n`;
+                        }
+
                         if (analysis.decoded.length > 0) {
                             texto += `  => Detalhes identificados no nome:\n`;
-                            analysis.decoded.forEach(d => texto += `     - ${d}\n`);
+                            analysis.decoded.forEach(d => {
+                                texto += `     - ${d}\n`;
+                            });
                         }
-                        if (analysis.notas.length > 0) analysis.notas.forEach(n => texto += `  => ${n}\n`);
+
+                        if (analysis.notas.length > 0) {
+                            analysis.notas.forEach(n => {
+                                texto += `  => ${n}\n`;
+                            });
+                        }
                         texto += `\n`;
                     });
                 }
             }
-            texto += "=======================================================\n";
-            texto += "Dica final: Em caso de lentidão ao abrir imagens gigantes, crie 'Pirâmides' ou utilize arquivos .ECW (se fornecidos).\n";
 
+            texto += "=======================================================\n";
+            texto += "Dica final: Em caso de lentidão ao abrir imagens .TIF gigantes, crie 'Pirâmides' (Pyramids) no seu software ou utilize os arquivos .ECW caso fornecidos.\n";
+            texto += "Atenção (.ECW): Por ser um formato de alta compressão de dados, arquivos .ECW são mais leves e rápidos, mas podem apresentar perda de qualidade visual em relação aos originais .TIF.\n";
+            
             generatedText = texto;
             previewText.value = texto;
             
