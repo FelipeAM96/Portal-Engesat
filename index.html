@@ -1083,6 +1083,11 @@
 
         function processFiles(files) {
             const projectData = { interesse: [], brutos: [], processados: [] };
+            
+            // Padrão Regex para capturar a nomenclatura bruta nativa do SPOT 1 a 5
+            // Ex: "003-010_S4_698-378-0_..." ou "002-003_S5_710-400-0_..."
+            const spotRawRegex = /^\d{3}-\d{3}_S[1-5]_\d{3}-\d{3}/i;
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 if (file.name.startsWith('.')) continue;
@@ -1100,19 +1105,27 @@
                     }
                     if (belongsTo) break;
                 }
+                
+                // Regra: Omitir os arquivos brutos poluídos do SPOT 1-5
+                if (belongsTo === 'brutos' && spotRawRegex.test(file.name)) {
+                    continue; 
+                }
+
                 if (belongsTo) projectData[belongsTo].push({ name: file.name, path: pathToUse, subfolder: subFolderName });
             }
             generateReport(projectData);
         }
 
         function generateReport(data) {
+            let sectionCounter = 1; // Contador dinâmico de seções
+            
             let texto = "=======================================================\n";
             texto += "        GUIA DO PROJETO - INSTRUÇÕES DE USO\n";
             texto += "=======================================================\n\n";
             texto += "Olá! Este documento foi criado para ajudar você a entender o que é cada arquivo entregue neste projeto de forma fácil e rápida.\n\n";
 
             texto += "-------------------------------------------------------\n";
-            texto += " 1. ÁREA DE INTERESSE\n";
+            texto += ` ${sectionCounter++}. ÁREA DE INTERESSE\n`;
             texto += "-------------------------------------------------------\n";
             texto += "Contém o perímetro exato (polígono) que usamos como limite para buscar e processar as imagens.\n\n";
 
@@ -1126,20 +1139,18 @@
                 texto += "\n";
             }
 
-            texto += "-------------------------------------------------------\n";
-            texto += " 2. DADOS BRUTOS\n";
-            texto += "-------------------------------------------------------\n";
-            texto += "Arquivos originais e metadados crus que vieram do satélite/sensor antes de passarem pelos nossos tratamentos.\n";
-            texto += "Importante: Se você não é um especialista que deseja refazer os processos do zero, PODE IGNORAR ESTA PASTA. Seu foco deve ser a pasta de 'Dados Processados'.\n\n";
-
-            if (data.brutos.length === 0) {
-                texto += "Nenhum arquivo encontrado nesta pasta.\n\n";
-            } else {
+            // Apenas renderiza a seção de "Dados brutos" se houver algum arquivo após as filtragens
+            if (data.brutos.length > 0) {
+                texto += "-------------------------------------------------------\n";
+                texto += ` ${sectionCounter++}. DADOS BRUTOS\n`;
+                texto += "-------------------------------------------------------\n";
+                texto += "Arquivos originais e metadados crus que vieram do satélite/sensor antes de passarem pelos nossos tratamentos.\n";
+                texto += "Importante: Se você não é um especialista que deseja refazer os processos do zero, PODE IGNORAR ESTA PASTA. Seu foco deve ser a pasta de 'Dados Processados'.\n\n";
                 texto += `Identificamos ${groupFiles(data.brutos).length} conjunto(s) de dados brutos nesta pasta.\n\n`;
             }
 
             texto += "-------------------------------------------------------\n";
-            texto += " 3. DADOS PROCESSADOS (A Pasta Mais Importante!)\n";
+            texto += ` ${sectionCounter++}. DADOS PROCESSADOS (A Pasta Mais Importante!)\n`;
             texto += "-------------------------------------------------------\n";
             texto += "Aqui estão os produtos finais. Estes são os arquivos prontos e ajustados que sua equipe irá utilizar no dia a dia.\n\n";
 
