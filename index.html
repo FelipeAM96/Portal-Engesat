@@ -66,9 +66,33 @@
         .tab-content.active { display: block; }
         /* Variantes flex que precisam do active */
         .tab-content.active.flex-container { display: flex; }
+
+        /* Estilos do Modo Noturno */
+        html.dark body { background-color: #0f172a; color: #f1f5f9; }
+        html.dark .bg-white { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark .bg-slate-50, html.dark .bg-gray-100 { background-color: #0f172a !important; border-color: #334155 !important; }
+        html.dark .bg-slate-200 { background-color: #334155 !important; }
+        html.dark .text-slate-800, html.dark .text-slate-900, html.dark .text-gray-800 { color: #f8fafc !important; }
+        html.dark .text-slate-700 { color: #e2e8f0 !important; }
+        html.dark .text-slate-600, html.dark .text-gray-500, html.dark .text-slate-500 { color: #94a3b8 !important; }
+        html.dark .border-slate-200, html.dark .border-slate-300, html.dark .border-gray-200 { border-color: #334155 !important; }
+        html.dark input, html.dark select, html.dark textarea { background-color: #0f172a !important; color: #f8fafc !important; border-color: #475569 !important; }
+        html.dark input:focus, html.dark select:focus, html.dark textarea:focus { border-color: #3b82f6 !important; }
+        html.dark .tab-btn:hover { color: #cbd5e1 !important; border-color: #475569 !important; }
+        html.dark .wt-type-btn:not(.active) { background-color: #1e293b !important; color: #cbd5e1 !important; border-color: #334155 !important; }
+        html.dark .wt-type-btn:not(.active):hover { background-color: #334155 !important; }
+        html.dark .image-entry { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark #copyModal .bg-slate-50 { background-color: #0f172a !important; border-color: #334155 !important; }
+        html.dark #copyModal .bg-slate-200 { background-color: #1e293b !important; }
+        html.dark header.border-blue-600 { border-color: #2563eb !important; }
+        html.dark .hover\:bg-slate-100:hover, html.dark .hover\:bg-blue-100:hover { background-color: #334155 !important; }
+        html.dark .bg-blue-50 { background-color: rgba(30, 58, 138, 0.2) !important; }
+        
+        /* Protege a área do mapa (Leaflet) para NUNCA entrar no modo noturno */
+        html.dark #map { background-color: #f8f9fa !important; color: #333 !important; }
     </style>
 </head>
-<body class="text-slate-800 min-h-screen flex flex-col">
+<body class="text-slate-800 min-h-screen flex flex-col transition-colors duration-300">
 
     <!-- Navbar / Tabs -->
     <div class="bg-white shadow-md z-50 sticky top-0">
@@ -78,7 +102,7 @@
                     <div class="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl">E</div>
                     <span class="font-bold text-xl text-slate-800 tracking-tight">Portal Engesat</span>
                 </div>
-                <div class="flex space-x-1 sm:space-x-8">
+                <div class="flex space-x-1 sm:space-x-6 items-center">
                     <button onclick="switchTab('tab-print-aoi')" id="btn-tab-print-aoi" class="tab-btn border-blue-600 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i class="fas fa-map-marked-alt mr-2"></i>Print AOI
                     </button>
@@ -87,6 +111,13 @@
                     </button>
                     <button onclick="switchTab('tab-readme')" id="btn-tab-readme" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i class="fas fa-file-signature mr-2"></i>README
+                    </button>
+                    
+                    <div class="border-l border-gray-300 h-6 mx-2 hidden sm:block"></div>
+                    
+                    <!-- Botão Dark Mode -->
+                    <button id="themeToggleBtn" class="text-slate-500 hover:text-blue-600 transition-colors p-2" title="Alternar Modo Noturno">
+                        <i class="fas fa-moon text-xl" id="themeIcon"></i>
                     </button>
                 </div>
             </div>
@@ -1319,6 +1350,29 @@
             
             // Abre a primeira aba
             switchTab('tab-print-aoi');
+
+            // Lógica do Modo Noturno (Dark Mode)
+            const themeToggleBtn = document.getElementById('themeToggleBtn');
+            const themeIcon = document.getElementById('themeIcon');
+            const htmlElement = document.documentElement;
+
+            if (themeToggleBtn && themeIcon) {
+                if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    htmlElement.classList.add('dark');
+                    themeIcon.classList.replace('fa-moon', 'fa-sun');
+                }
+
+                themeToggleBtn.addEventListener('click', () => {
+                    htmlElement.classList.toggle('dark');
+                    if (htmlElement.classList.contains('dark')) {
+                        localStorage.setItem('theme', 'dark');
+                        themeIcon.classList.replace('fa-moon', 'fa-sun');
+                    } else {
+                        localStorage.setItem('theme', 'light');
+                        themeIcon.classList.replace('fa-sun', 'fa-moon');
+                    }
+                });
+            }
         });
 
     </script>
