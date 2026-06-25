@@ -244,7 +244,7 @@
                     <!-- Novas opções de Processamento e Radiometria -->
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mt-2">
                         <h4 class="text-sm font-semibold text-slate-700 mb-3">Parâmetros de Processamento</h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Modo</label>
                                 <select id="img-processamento" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
@@ -256,6 +256,10 @@
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Radiometria (bits)</label>
                                 <input type="text" id="img-bits" value="8" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Bandas</label>
+                                <input type="text" id="img-bandas" value="3 e 4" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                             </div>
                         </div>
                         <div class="mt-4 flex flex-col gap-2 text-sm text-slate-600">
@@ -873,6 +877,7 @@
             // Novos parâmetros extraídos do DOM
             const imgProcessamento = document.getElementById('img-processamento') ? document.getElementById('img-processamento').value : 'Modo PSM';
             const imgBits = document.getElementById('img-bits') ? document.getElementById('img-bits').value : '8';
+            const imgBandas = document.getElementById('img-bandas') ? document.getElementById('img-bandas').value : '3 e 4';
             const imgCores = document.getElementById('img-cores') ? document.getElementById('img-cores').checked : true;
             const imgContraste = document.getElementById('img-contraste') ? document.getElementById('img-contraste').checked : true;
 
@@ -891,7 +896,7 @@
                 const dataImg = entry.querySelector('.img-date').value.trim() || '[DATA NÃO INFORMADA]';
                 const hasRawData = satelliteData[sat] ? satelliteData[sat].raw : false;
 
-                imgBlocksText += getImagemBlock(sat, res, dataImg, projecao, hasRawData, formatOptions, imgProcessamento, imgBits, imgCores, imgContraste);
+                imgBlocksText += getImagemBlock(sat, res, dataImg, projecao, hasRawData, formatOptions, imgProcessamento, imgBits, imgCores, imgContraste, imgBandas);
                 if (index < arr.length - 1) imgBlocksText += `\n`; 
             });
 
@@ -906,7 +911,7 @@
             document.getElementById('wt-output').value = msg;
         }
 
-        function getImagemBlock(sat, res, dataImg, projecao, hasRawData, formatOptions, imgProcessamento, imgBits, imgCores, imgContraste) {
+        function getImagemBlock(sat, res, dataImg, projecao, hasRawData, formatOptions, imgProcessamento, imgBits, imgCores, imgContraste, imgBandas) {
             let block = `- Imagem ${sat}\n`;
             const isPanOnly = (sat === "WorldView 1" || sat === "Eros B");
             
@@ -918,8 +923,8 @@
             block += `- ${res} de resolução espacial\n- Data(s) de aquisição: ${dataImg}\n- ${projecao}\n- Ortoretificada com parâmetros orbitais\n`;
             
             if (isPanOnly) block += `- 1 banda (Pancromática)\n`;
-            else if (sat.includes("Landsat")) block += `- Cores naturais 432 ou 3 e 4 bandas\n`;
-            else block += `- 3 e 4 bandas espectrais\n`;
+            else if (sat.includes("Landsat")) block += `- Cores naturais 432 ou ${imgBandas} bandas\n`;
+            else block += `- ${imgBandas} bandas espectrais\n`;
             
             if (formatOptions.geotif) block += `- GeoTIFF\n`;
             if (formatOptions.kmz) block += `- KMZ\n`;
