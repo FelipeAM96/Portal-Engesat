@@ -79,8 +79,8 @@
         html.dark input, html.dark select, html.dark textarea { background-color: #0f172a !important; color: #f8fafc !important; border-color: #475569 !important; }
         html.dark input:focus, html.dark select:focus, html.dark textarea:focus { border-color: #3b82f6 !important; }
         html.dark .tab-btn:hover { color: #cbd5e1 !important; border-color: #475569 !important; }
-        html.dark .wt-type-btn:not(.active) { background-color: #1e293b !important; color: #cbd5e1 !important; border-color: #334155 !important; }
-        html.dark .wt-type-btn:not(.active):hover { background-color: #334155 !important; }
+        html.dark .wt-type-btn:not(.active), html.dark .fp-type-btn:not(.active) { background-color: #1e293b !important; color: #cbd5e1 !important; border-color: #334155 !important; }
+        html.dark .wt-type-btn:not(.active):hover, html.dark .fp-type-btn:not(.active):hover { background-color: #334155 !important; }
         html.dark .image-entry { background-color: #1e293b !important; border-color: #334155 !important; }
         html.dark #copyModal .bg-slate-50 { background-color: #0f172a !important; border-color: #334155 !important; }
         html.dark #copyModal .bg-slate-200 { background-color: #1e293b !important; }
@@ -102,12 +102,15 @@
                     <div class="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl">E</div>
                     <span class="font-bold text-xl text-slate-800 tracking-tight">Portal Engesat</span>
                 </div>
-                <div class="flex space-x-1 sm:space-x-6 items-center">
+                <div class="flex space-x-1 sm:space-x-6 items-center overflow-x-auto">
                     <button onclick="switchTab('tab-print-aoi')" id="btn-tab-print-aoi" class="tab-btn border-blue-600 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i class="fas fa-map-marked-alt mr-2"></i>Print AOI
                     </button>
                     <button onclick="switchTab('tab-wetransfer')" id="btn-tab-wetransfer" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i class="fas fa-paper-plane mr-2"></i>WeTransfer
+                    </button>
+                    <button onclick="switchTab('tab-folha')" id="btn-tab-folha" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-file-contract mr-2"></i>Folha de Projeto
                     </button>
                     <button onclick="switchTab('tab-readme')" id="btn-tab-readme" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i class="fas fa-file-signature mr-2"></i>README
@@ -189,7 +192,7 @@
         <!-- ========================================== -->
         <!-- ABA 2: WETRANSFER GENERATOR                -->
         <!-- ========================================== -->
-        <div id="tab-wetransfer" class="tab-content flex-container max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex-col md:flex-row border border-slate-200">
+        <div id="tab-wetransfer" class="tab-content max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex-col md:flex-row border border-slate-200">
             <!-- Left Panel -->
             <div id="wetransfer-form-panel" class="w-full md:w-5/12 bg-slate-50 p-6 sm:p-8 border-r border-slate-200 flex flex-col gap-6 overflow-y-auto" style="max-height: 85vh;">
                 <div>
@@ -241,16 +244,16 @@
                         Adicionar outro satélite
                     </button>
                     
-                    <!-- Novas opções de Processamento e Radiometria -->
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mt-2">
                         <h4 class="text-sm font-semibold text-slate-700 mb-3">Parâmetros de Processamento</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Modo</label>
-                                <select id="img-processamento" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <select id="img-processamento" onchange="handleModoChange(this, 'img-bandas', 'img-cores')" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                                     <option value="Modo PSM" selected>Modo PSM</option>
                                     <option value="BUNDLE e Modo PSM">BUNDLE e Modo PSM</option>
                                     <option value="BUNDLE">BUNDLE</option>
+                                    <option value="PAN (P&B)">PAN (P&B)</option>
                                 </select>
                             </div>
                             <div>
@@ -275,7 +278,7 @@
                     </div>
 
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mt-2">
-                        <h4 class="text-sm font-semibold text-slate-700 mb-3">Formatos e Opções</h4>
+                        <h4 class="text-sm font-semibold text-slate-700 mb-3">Formatos Entregues</h4>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-2 text-sm text-slate-600">
                             <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fmt-geotif" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> GeoTIFF</label>
                             <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fmt-kmz" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> KMZ</label>
@@ -292,13 +295,13 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Fuso UTM</label>
-                            <input type="number" id="utm-zone" min="17" max="25" value="23" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <input type="number" id="utm-zone" min="17" max="25" value="22" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Hemisfério</label>
                             <select id="utm-hemi" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                <option value="Sul">Sul (S)</option>
-                                <option value="Norte">Norte (N)</option>
+                                <option value="S">Sul (S)</option>
+                                <option value="N">Norte (N)</option>
                             </select>
                         </div>
                     </div>
@@ -318,7 +321,7 @@
             <div class="w-full md:w-7/12 bg-white p-6 sm:p-8 flex flex-col relative" style="min-height: 50vh;">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-slate-800">Resultado Final</h2>
-                    <button onclick="copyWtToClipboard()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
+                    <button onclick="copyToClipboard('wt-output', 'wt-toast')" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         <span>Copiar Texto</span>
                     </button>
@@ -331,7 +334,163 @@
         </div>
 
         <!-- ========================================== -->
-        <!-- ABA 3: README GENERATOR                    -->
+        <!-- ABA 3: FOLHA DE PROJETO                    -->
+        <!-- ========================================== -->
+        <div id="tab-folha" class="tab-content max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex-col md:flex-row border border-slate-200">
+            <!-- Left Panel -->
+            <div id="folha-form-panel" class="w-full md:w-5/12 bg-slate-50 p-6 sm:p-8 border-r border-slate-200 flex flex-col gap-6 overflow-y-auto" style="max-height: 85vh;">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900 mb-1">Folha de Projeto</h1>
+                    <p class="text-sm text-slate-500">Gere o texto descritivo técnico em formato de parágrafo.</p>
+                </div>
+
+                <div class="flex flex-col gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Nome da Área (Opcional)</label>
+                        <input type="text" id="fp-area-name" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Fazenda Santa Maria">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Forma de Entrega</label>
+                        <input type="text" id="fp-delivery" value="Entrega por FTP, enviado através do WeTransfer." class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-slate-700">Conteúdo do Projeto</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" id="btn-fp-img" class="fp-type-btn active py-2 px-3 text-sm font-medium rounded-lg border-2 border-blue-600 bg-blue-50 text-blue-700 transition-colors" onclick="setFpType('img')">Imagem</button>
+                        <button type="button" id="btn-fp-alt" class="fp-type-btn py-2 px-3 text-sm font-medium rounded-lg border-2 border-transparent bg-white shadow-sm text-slate-600 hover:bg-slate-100 transition-colors" onclick="setFpType('alt')">Altimetria</button>
+                        <button type="button" id="btn-fp-combo" class="fp-type-btn py-2 px-3 text-sm font-medium rounded-lg border-2 border-transparent bg-white shadow-sm text-slate-600 hover:bg-slate-100 transition-colors" onclick="setFpType('combo')">Combo</button>
+                    </div>
+                </div>
+
+                <div id="fp-block-altimetry" class="hidden flex-col gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Dados Altimétricos</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Produto</label>
+                        <select id="fp-alt-product" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="WorldDEM Neo">WorldDEM Neo</option>
+                            <option value="WorldDEM">WorldDEM</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Modelos Incluídos</label>
+                        <select id="fp-alt-model" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="MDS e MDT">MDS e MDT</option>
+                            <option value="MDT">Apenas MDT</option>
+                            <option value="MDS">Apenas MDS</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Curvas de Nível</label>
+                        <select id="fp-alt-contour" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="1 metro">1 metro de equidistância</option>
+                            <option value="2 metros" selected>2 metros de equidistância</option>
+                            <option value="1 e 2 metros">1 e 2 metros de equidistância</option>
+                            <option value="N/A">Não incluir curvas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="fp-block-image" class="flex flex-col gap-4">
+                    <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Dados de Imagem</h3>
+                    <div id="fp-images-container" class="flex flex-col gap-4"></div>
+                    <button type="button" onclick="addFpImageEntry()" class="text-sm text-blue-600 font-medium hover:text-blue-800 flex items-center gap-1 self-start transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Adicionar outro satélite
+                    </button>
+                    
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mt-2">
+                        <h4 class="text-sm font-semibold text-slate-700 mb-3">Parâmetros de Processamento</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Modo</label>
+                                <select id="fp-img-processamento" onchange="handleModoChange(this, 'fp-img-bandas', 'fp-img-cores')" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="Modo PSM" selected>Modo PSM</option>
+                                    <option value="BUNDLE e Modo PSM">BUNDLE e Modo PSM</option>
+                                    <option value="BUNDLE">BUNDLE</option>
+                                    <option value="PAN (P&B)">PAN (P&B)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Bits</label>
+                                <input type="text" id="fp-img-bits" value="8" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Bandas</label>
+                                <input type="text" id="fp-img-bandas" value="4" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                        <div class="mt-4 flex flex-col gap-2 text-sm text-slate-600">
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900">
+                                <input type="checkbox" id="fp-img-cores" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> 
+                                Informar como Colorida / Cores Naturais
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900">
+                                <input type="checkbox" id="fp-img-contraste" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> 
+                                Informar com e sem contraste
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mt-2">
+                        <h4 class="text-sm font-semibold text-slate-700 mb-3">Formatos Entregues</h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-2 text-sm text-slate-600">
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fp-fmt-geotif" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> GeoTIFF</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fp-fmt-kmz" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> KMZ</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fp-fmt-ecw" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> ECW</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fp-fmt-dwg" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> DWG</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fp-fmt-shp" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> SHP</label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900 font-medium text-blue-700"><input type="checkbox" id="fp-opt-carta" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> Carta Imagem</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Projeção (Comum)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Fuso UTM</label>
+                            <input type="number" id="fp-utm-zone" min="17" max="25" value="22" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Hemisfério</label>
+                            <select id="fp-utm-hemi" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="S">Sul (S)</option>
+                                <option value="N">Norte (N)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <label class="text-sm font-semibold text-slate-700">Observações Finais (Opcional)</label>
+                    <textarea id="fp-obs-text" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Ex: Informações adicionais ou notas para a equipe técnica..."></textarea>
+                </div>
+
+                <button onclick="generateFolha()" class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98]">
+                    Gerar Texto
+                </button>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="w-full md:w-7/12 bg-white p-6 sm:p-8 flex flex-col relative" style="min-height: 50vh;">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-slate-800">Texto para Folha de Projeto</h2>
+                    <button onclick="copyToClipboard('fp-output', 'fp-toast')" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copiar Texto</span>
+                    </button>
+                </div>
+                <textarea id="fp-output" readonly class="flex-grow w-full bg-slate-50 border border-slate-200 rounded-xl p-5 text-base text-justify text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 leading-relaxed"></textarea>
+                <div id="fp-toast" class="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full font-medium text-sm shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-10">
+                    Texto copiado para a área de transferência!
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ABA 4: README GENERATOR                    -->
         <!-- ========================================== -->
         <div id="tab-readme" class="tab-content max-w-4xl mx-auto w-full">
             <header class="bg-white rounded-xl shadow-sm p-6 mb-6 border-t-4 border-blue-600">
@@ -384,30 +543,37 @@
         // LÓGICA GERAL & TAB NAVIGATION
         // ==========================================
         function switchTab(tabId) {
-            // Oculta todas as abas
             document.querySelectorAll('.tab-content').forEach(el => {
                 el.classList.remove('active', 'flex-container');
             });
             
-            // Remove estilos ativos dos botões
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('border-blue-600', 'text-blue-600');
                 btn.classList.add('border-transparent', 'text-gray-500');
             });
 
-            // Ativa a aba atual
             const targetTab = document.getElementById(tabId);
             targetTab.classList.add('active');
-            if (tabId === 'tab-wetransfer') targetTab.classList.add('flex-container'); // Precisa ser flex
+            if (tabId === 'tab-wetransfer' || tabId === 'tab-folha') {
+                targetTab.classList.add('flex-container');
+            }
 
             const activeBtn = document.getElementById('btn-' + tabId);
             activeBtn.classList.add('border-blue-600', 'text-blue-600');
             activeBtn.classList.remove('border-transparent', 'text-gray-500');
 
-            // Correção Leaflet: Recalcular tamanho do mapa caso a aba tenha sido revelada
             if (tabId === 'tab-print-aoi' && map) {
                 setTimeout(() => map.invalidateSize(), 100);
             }
+        }
+
+        function copyToClipboard(textareaId, toastId) {
+            const output = document.getElementById(textareaId);
+            output.select();
+            document.execCommand('copy');
+            const toast = document.getElementById(toastId);
+            toast.classList.replace('opacity-0', 'opacity-100');
+            setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 2500);
         }
 
         // ==========================================
@@ -453,9 +619,7 @@
                 } else {
                     throw new Error("Formato não suportado. Envie .kml ou .kmz");
                 }
-
                 processKML(kmlText);
-
             } catch (err) {
                 errorMessage.textContent = "Erro ao processar: " + err.message;
                 errorBox.classList.remove('hidden');
@@ -510,7 +674,6 @@
                     }
                 }
             }
-
             if (polygonsData.length === 0) throw new Error("Não foi possível extrair coordenadas.");
             renderMap(polygonsData);
         }
@@ -565,28 +728,12 @@
             actionsContainer.classList.remove('hidden');
 
             if (!map) {
-                const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19, crossOrigin: true
-                });
+                const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: true });
+                const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, crossOrigin: true });
 
-                const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                    maxZoom: 19, crossOrigin: true
-                });
+                map = L.map('map', { zoomControl: true, attributionControl: false, preferCanvas: true, layers: [osmLayer] });
+                L.control.layers({ "Mapa Base (OSM)": osmLayer, "Satélite (Esri)": satLayer }, null, { position: 'topleft' }).addTo(map);
 
-                map = L.map('map', {
-                    zoomControl: true,
-                    attributionControl: false,
-                    preferCanvas: true,
-                    layers: [osmLayer] // OSM como padrão
-                });
-                
-                // Adiciona o controle de seleção de mapa base na visualização (Será ocultado na exportação)
-                L.control.layers({
-                    "Mapa Base (OSM)": osmLayer,
-                    "Satélite (Esri)": satLayer
-                }, null, { position: 'topleft' }).addTo(map);
-
-                // Adiciona a logo da Engesat no canto superior esquerdo
                 const LogoControl = L.Control.extend({
                     options: { position: 'topleft' },
                     onAdd: function () {
@@ -597,7 +744,6 @@
                     }
                 });
                 map.addControl(new LogoControl());
-
                 L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(map);
 
                 const NorthControl = L.Control.extend({
@@ -656,43 +802,35 @@
             });
 
             updateLegend(polygonsData[0].areaKm2, polygonsData[0].projectionName, polygonsData.length > 1 ? polygonsData[0].index : null);
-
-            setTimeout(() => { 
-                map.invalidateSize(); 
-                map.fitBounds(polygonLayer.getBounds(), { padding: [20, 20] }); 
-            }, 100);
+            setTimeout(() => { map.invalidateSize(); map.fitBounds(polygonLayer.getBounds(), { padding: [20, 20] }); }, 100);
         }
 
         async function generateMapCanvas() {
             const mapNode = document.getElementById('map');
             const zoomControl = document.querySelector('.leaflet-control-zoom');
-            const layersControl = document.querySelector('.leaflet-control-layers'); // Pega o botão de seleção de base map
+            const layersControl = document.querySelector('.leaflet-control-layers'); 
 
             if (zoomControl) zoomControl.style.display = 'none';
-            if (layersControl) layersControl.style.display = 'none'; // Esconde antes de capturar
+            if (layersControl) layersControl.style.display = 'none';
 
-            const originalScrollX = window.scrollX;
-            const originalScrollY = window.scrollY;
+            const originalScrollX = window.scrollX; const originalScrollY = window.scrollY;
             window.scrollTo(0, 0);
 
             await new Promise(r => setTimeout(r, 500));
 
             try {
-                const canvas = await html2canvas(mapNode, {
-                    useCORS: true, allowTaint: false, backgroundColor: '#ffffff', scale: 2
-                });
+                const canvas = await html2canvas(mapNode, { useCORS: true, allowTaint: false, backgroundColor: '#ffffff', scale: 2 });
                 return canvas;
             } finally {
                 if (zoomControl) zoomControl.style.display = '';
-                if (layersControl) layersControl.style.display = ''; // Devolve o botão após a captura
+                if (layersControl) layersControl.style.display = ''; 
                 window.scrollTo(originalScrollX, originalScrollY);
             }
         }
 
         downloadBtn.addEventListener('click', async () => {
             const originalText = downloadBtn.innerHTML;
-            downloadBtn.innerHTML = 'Processando...';
-            downloadBtn.disabled = true;
+            downloadBtn.innerHTML = 'Processando...'; downloadBtn.disabled = true;
 
             try {
                 const canvas = await generateMapCanvas();
@@ -700,12 +838,8 @@
                 link.download = `${currentFileName}_Mapa.png`;
                 link.href = canvas.toDataURL('image/png', 1.0);
                 link.click();
-            } catch (err) {
-                alert("Erro ao gerar imagem.");
-            } finally {
-                downloadBtn.innerHTML = originalText;
-                downloadBtn.disabled = false;
-            }
+            } catch (err) { alert("Erro ao gerar imagem.");
+            } finally { downloadBtn.innerHTML = originalText; downloadBtn.disabled = false; }
         });
 
         document.getElementById('closeModalBtn').addEventListener('click', () => {
@@ -714,8 +848,7 @@
 
         copyBtn.addEventListener('click', async () => {
             const originalText = copyBtn.innerHTML;
-            copyBtn.innerHTML = 'Copiando...';
-            copyBtn.disabled = true;
+            copyBtn.innerHTML = 'Copiando...'; copyBtn.disabled = true;
 
             try {
                 const canvas = await generateMapCanvas();
@@ -737,35 +870,28 @@
                         const imgUrl = canvas.toDataURL('image/png', 1.0);
                         document.getElementById('modalImage').src = imgUrl;
                         document.getElementById('copyModal').classList.remove('hidden');
-                        copyBtn.innerHTML = originalText;
-                        copyBtn.disabled = false;
+                        copyBtn.innerHTML = originalText; copyBtn.disabled = false;
                     }
                 }, 'image/png', 1.0);
             } catch (err) {
                 alert("Erro ao copiar.");
-                copyBtn.disabled = false;
-                copyBtn.innerHTML = originalText;
+                copyBtn.disabled = false; copyBtn.innerHTML = originalText;
             }
         });
 
-        // Drag & drop behavior print AOI
         const dropZone = document.querySelector('label[for="fileInput"]');
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
         });
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.add('bg-blue-200'), false);
-        });
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.remove('bg-blue-200'), false);
-        });
+        ['dragenter', 'dragover'].forEach(eventName => { dropZone.addEventListener(eventName, () => dropZone.classList.add('bg-blue-200'), false); });
+        ['dragleave', 'drop'].forEach(eventName => { dropZone.addEventListener(eventName, () => dropZone.classList.remove('bg-blue-200'), false); });
         dropZone.addEventListener('drop', (e) => {
             fileInput.files = e.dataTransfer.files;
             fileInput.dispatchEvent(new Event('change'));
         }, false);
 
         // ==========================================
-        // APP 2: WETRANSFER SCRIPT
+        // CONFIGURAÇÕES GERAIS (Satélites)
         // ==========================================
         const satelliteData = {
             "Pleiades Neo": { res: ["30 cm"], raw: true }, "Pleiades": { res: ["50 cm"], raw: true },
@@ -785,6 +911,15 @@
             "Landsat 4 / 5 / 7": { res: ["30 m"], raw: false }, "Sentinel 2": { res: ["10 m"], raw: false }
         };
 
+        function getSatOptionsHTML() {
+            let options = '';
+            for (const sat in satelliteData) options += `<option value="${sat}">${sat}</option>`;
+            return options;
+        }
+
+        // ==========================================
+        // APP 2: WETRANSFER SCRIPT
+        // ==========================================
         let wtCurrentType = 'img';
 
         function setWtType(type) {
@@ -810,14 +945,9 @@
             generateMessage();
         }
 
-        function getSatOptionsHTML() {
-            let options = '';
-            for (const sat in satelliteData) options += `<option value="${sat}">${sat}</option>`;
-            return options;
-        }
-
         function addImageEntry() {
             const container = document.getElementById('images-container');
+            if(!container) return;
             const entryCount = container.children.length;
             const entry = document.createElement('div');
             entry.className = "image-entry bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative flex flex-col gap-3 transition-all";
@@ -851,6 +981,7 @@
         }
 
         function updateRes(selectElement) {
+            if (!selectElement) return;
             const sat = selectElement.value;
             const resSelect = selectElement.closest('.image-entry').querySelector('.img-resolution');
             resSelect.innerHTML = '';
@@ -861,10 +992,62 @@
                     resSelect.appendChild(option);
                 });
             }
-            generateMessage();
+            
+            // Automação: Setar PAN e 1 Banda como default para Eros B e WV1
+            const isWeTransfer = selectElement.closest('#tab-wetransfer');
+            const isFolha = selectElement.closest('#tab-folha');
+            
+            const processamentoId = isWeTransfer ? 'img-processamento' : 'fp-img-processamento';
+            const bandasId = isWeTransfer ? 'img-bandas' : 'fp-img-bandas';
+            const coresId = isWeTransfer ? 'img-cores' : 'fp-img-cores';
+            
+            const processamentoSelect = document.getElementById(processamentoId);
+            const bandasInput = document.getElementById(bandasId);
+            const coresInput = document.getElementById(coresId);
+
+            if (sat === 'WorldView 1' || sat === 'Eros B') {
+                if (processamentoSelect) processamentoSelect.value = 'PAN (P&B)';
+                if (bandasInput) bandasInput.value = '1';
+                if (coresInput) coresInput.checked = false;
+            } else {
+                // Caso troque para satélite colorido, restaura valores padrão se estavam em PAN
+                if (processamentoSelect && processamentoSelect.value === 'PAN (P&B)') {
+                    processamentoSelect.value = 'Modo PSM';
+                }
+                if (bandasInput && bandasInput.value === '1') {
+                    bandasInput.value = isWeTransfer ? '3 e 4' : '4';
+                }
+                if (coresInput && !coresInput.checked) {
+                    coresInput.checked = true;
+                }
+            }
+
+            if (isWeTransfer) generateMessage();
+            if (isFolha) generateFolha();
+        }
+
+        function handleModoChange(selectElement, bandasId, coresId) {
+            const bandasInput = document.getElementById(bandasId);
+            const coresInput = document.getElementById(coresId);
+            
+            if (selectElement.value === 'PAN (P&B)') {
+                if (bandasInput) bandasInput.value = '1';
+                if (coresInput) coresInput.checked = false;
+            } else {
+                // Restaura o valor padrão se estava em PAN e o utilizador alterou o modo
+                if (bandasInput && bandasInput.value === '1') {
+                    bandasInput.value = bandasId === 'img-bandas' ? '3 e 4' : '4';
+                }
+                if (coresInput && !coresInput.checked) {
+                    coresInput.checked = true;
+                }
+            }
         }
 
         function generateMessage() {
+            // Se os elementos não existirem (ainda renderizando), sai suavemente
+            if (!document.getElementById('utm-zone') || !document.getElementById('fmt-geotif')) return;
+
             const fuso = document.getElementById('utm-zone').value;
             const hemi = document.getElementById('utm-hemi').value;
             const projecao = `UTM ${fuso} ${hemi === 'Sul' ? 'Sul' : 'Norte'} SIRGAS 2000`;
@@ -874,7 +1057,6 @@
             const altContour = document.getElementById('alt-contour') ? document.getElementById('alt-contour').value : '2 m';
             const obsText = document.getElementById('obs-text').value.trim();
             
-            // Novos parâmetros extraídos do DOM
             const imgProcessamento = document.getElementById('img-processamento') ? document.getElementById('img-processamento').value : 'Modo PSM';
             const imgBits = document.getElementById('img-bits') ? document.getElementById('img-bits').value : '8';
             const imgBandas = document.getElementById('img-bandas') ? document.getElementById('img-bandas').value : '3 e 4';
@@ -890,7 +1072,7 @@
             let msg = `Prezado(a),\n\n`;
             let imgBlocksText = '';
             
-            document.querySelectorAll('.image-entry').forEach((entry, index, arr) => {
+            document.querySelectorAll('#images-container .image-entry').forEach((entry, index, arr) => {
                 const sat = entry.querySelector('.img-satellite').value;
                 const res = entry.querySelector('.img-resolution').value;
                 const dataImg = entry.querySelector('.img-date').value.trim() || '[DATA NÃO INFORMADA]';
@@ -913,16 +1095,15 @@
 
         function getImagemBlock(sat, res, dataImg, projecao, hasRawData, formatOptions, imgProcessamento, imgBits, imgCores, imgContraste, imgBandas) {
             let block = `- Imagem ${sat}\n`;
-            const isPanOnly = (sat === "WorldView 1" || sat === "Eros B");
+            const isPan = (sat === "WorldView 1" || sat === "Eros B" || imgProcessamento === "PAN (P&B)");
             
-            // Controle dinâmico do Processamento (omitido para Satélites que não comportam naturalmente essas escolhas, como Landsat e P&B)
-            if (hasRawData && !isPanOnly && !sat.includes("Landsat") && !sat.includes("Sentinel") && !sat.includes("SPOT 4") && !sat.includes("SPOT 5")) {
+            if (hasRawData && !sat.includes("Landsat") && !sat.includes("Sentinel") && !sat.includes("SPOT 4") && !sat.includes("SPOT 5")) {
                 block += `- ${imgProcessamento}\n`;
             }
 
             block += `- ${res} de resolução espacial\n- Data(s) de aquisição: ${dataImg}\n- ${projecao}\n- Ortoretificada com parâmetros orbitais\n`;
             
-            if (isPanOnly) block += `- 1 banda (Pancromática)\n`;
+            if (isPan) block += `- 1 banda (Pancromática)\n`;
             else if (sat.includes("Landsat")) block += `- Cores naturais 432 ou ${imgBandas} bandas\n`;
             else block += `- ${imgBandas} bandas espectrais\n`;
             
@@ -933,17 +1114,14 @@
             if (formatOptions.shp) block += `- SHP\n`;
             if (formatOptions.carta) block += `- Carta Imagem\n`;
             
-            // Radiometria configurada pelo usuário
             block += `- ${imgBits} bits\n`;
             
-            // Cores configuradas pelo usuário
-            if (isPanOnly) {
+            if (isPan) {
                 block += `- Imagem P&B (Pancromática)\n`;
             } else {
                 if (imgCores) block += `- Cores naturais\n`;
             }
             
-            // Contraste configurado pelo usuário
             if (imgContraste) block += `- Com e sem contraste\n`;
             
             if (hasRawData) block += `- Dados brutos acompanham\n- Metadados da imagem original utilizada acompanham\n`;
@@ -956,17 +1134,197 @@
             return `${produto}\n- Resolução espacial de ${resolucao}\n- ${modelos}\n- GeoTiff 32 bit floating point\n- Nuvem de pontos .las e .txt\n\n- Curvas de nível\n- ${contour} de equidistância\n- shp, dwg e kml\n\n- ${projecao}\n- Sirgas 2000\n`;
         }
 
-        function copyWtToClipboard() {
-            const output = document.getElementById('wt-output');
-            output.select();
-            document.execCommand('copy');
-            const toast = document.getElementById('wt-toast');
-            toast.classList.replace('opacity-0', 'opacity-100');
-            setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 2500);
-        }
 
         // ==========================================
-        // APP 3: README SCRIPT
+        // APP 3: FOLHA DE PROJETO
+        // ==========================================
+        let fpCurrentType = 'img';
+
+        function setFpType(type) {
+            fpCurrentType = type;
+            document.querySelectorAll('.fp-type-btn').forEach(btn => {
+                btn.className = "fp-type-btn py-2 px-3 text-sm font-medium rounded-lg border-2 border-transparent bg-white shadow-sm text-slate-600 hover:bg-slate-100 transition-colors";
+            });
+            document.getElementById(`btn-fp-${type}`).className = "fp-type-btn active py-2 px-3 text-sm font-medium rounded-lg border-2 border-blue-600 bg-blue-50 text-blue-700 transition-colors";
+
+            const blockImg = document.getElementById('fp-block-image');
+            const blockAlt = document.getElementById('fp-block-altimetry');
+
+            if (type === 'img') {
+                blockImg.classList.remove('hidden'); blockImg.classList.add('flex');
+                blockAlt.classList.add('hidden'); blockAlt.classList.remove('flex');
+            } else if (type === 'alt') {
+                blockAlt.classList.remove('hidden'); blockAlt.classList.add('flex');
+                blockImg.classList.add('hidden'); blockImg.classList.remove('flex');
+            } else if (type === 'combo') {
+                blockImg.classList.remove('hidden'); blockImg.classList.add('flex');
+                blockAlt.classList.remove('hidden'); blockAlt.classList.add('flex');
+            }
+            generateFolha();
+        }
+
+        function addFpImageEntry() {
+            const container = document.getElementById('fp-images-container');
+            if(!container) return;
+            const entryCount = container.children.length;
+            const entry = document.createElement('div');
+            entry.className = "image-entry fp-image-entry bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative flex flex-col gap-3 transition-all";
+            
+            let deleteBtn = entryCount > 0 ? `<button type="button" onclick="this.parentElement.remove(); generateFolha();" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors" title="Remover"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : '';
+
+            const today = new Date();
+            const dateEx = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+
+            entry.innerHTML = `
+                ${deleteBtn}
+                <div class="pr-8">
+                    <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Satélite</label>
+                    <select class="img-satellite w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" onchange="updateRes(this)">
+                        ${getSatOptionsHTML()}
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Resolução</label>
+                        <select class="img-resolution w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Data(s)</label>
+                        <input type="text" class="img-date w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: ${dateEx}">
+                    </div>
+                </div>
+            `;
+            container.appendChild(entry);
+            updateRes(entry.querySelector('.img-satellite'));
+        }
+
+        function generateFolha() {
+            if (!document.getElementById('fp-utm-zone') || !document.getElementById('fp-fmt-geotif')) return;
+
+            // Geral
+            const areaName = document.getElementById('fp-area-name').value.trim();
+            const delivery = document.getElementById('fp-delivery').value.trim();
+            const fuso = document.getElementById('fp-utm-zone').value;
+            const hemi = document.getElementById('fp-utm-hemi').value; // 'S' ou 'N'
+            const obsText = document.getElementById('fp-obs-text').value.trim();
+            
+            // Textos dinâmicos base
+            const projText = `sistema de coordenadas UTM SIRGAS 2000, fuso ${fuso}${hemi === 'Sul' || hemi === 'S' ? 'S' : 'N'}`;
+            const areaText = areaName ? `, área de ${areaName}` : ``;
+            let deliveryText = "";
+            if (delivery) {
+                deliveryText = delivery.endsWith('.') ? ` ${delivery}` : ` ${delivery}.`;
+            }
+
+            // ALTIMETRIA
+            const altProduct = document.getElementById('fp-alt-product').value;
+            const altRes = altProduct.includes('Neo') ? '5 metros' : '12 metros';
+            const altModel = document.getElementById('fp-alt-model').value; 
+            const altContour = document.getElementById('fp-alt-contour').value;
+            
+            let altimetryPhrase = `Modelo Digital de Terreno ${altProduct} de ${altRes} de resolução espacial, contendo ${altModel}`;
+            if (altContour !== "N/A") {
+                altimetryPhrase += `, curvas de nível de ${altContour}`;
+            }
+            altimetryPhrase += `, nuvem de pontos LAS e arquivo TXT`;
+
+            // IMAGEM
+            let imgTexts = [];
+            const imgProcessamento = document.getElementById('fp-img-processamento') ? document.getElementById('fp-img-processamento').value : 'Modo PSM';
+            const imgBits = document.getElementById('fp-img-bits').value;
+            const imgBandas = document.getElementById('fp-img-bandas').value;
+            const isColor = document.getElementById('fp-img-cores').checked;
+            const isContraste = document.getElementById('fp-img-contraste').checked;
+            
+            const formatOptions = {
+                geotif: document.getElementById('fp-fmt-geotif').checked, 
+                kmz: document.getElementById('fp-fmt-kmz').checked,
+                ecw: document.getElementById('fp-fmt-ecw').checked, 
+                dwg: document.getElementById('fp-fmt-dwg').checked,
+                shp: document.getElementById('fp-fmt-shp').checked, 
+                carta: document.getElementById('fp-opt-carta').checked
+            };
+
+            let formats = [];
+            if(formatOptions.geotif) formats.push("GeoTIFF");
+            if(formatOptions.kmz) formats.push("KMZ");
+            if(formatOptions.ecw) formats.push("ECW");
+            if(formatOptions.dwg) formats.push("DWG");
+            if(formatOptions.shp) formats.push("SHP");
+
+            let formatsStr = formats.length > 1 ? formats.slice(0, -1).join(", ") + " e " + formats[formats.length - 1] : formats[0] || "";
+            
+            let formatSuffix = "";
+            if (formatsStr) {
+                formatSuffix = `, entregue em ${formatsStr}`;
+                if (imgBits) formatSuffix += ` ${imgBits} bits`;
+                if (imgBandas) formatSuffix += ` com ${imgBandas} bandas espectrais`;
+            }
+            if (formatOptions.carta) {
+                formatSuffix += ` e acompanhada de Carta Imagem`;
+            }
+
+            document.querySelectorAll('#fp-images-container .fp-image-entry').forEach((entry) => {
+                const sat = entry.querySelector('.img-satellite').value;
+                const res = entry.querySelector('.img-resolution').value;
+                const dateImg = entry.querySelector('.img-date').value.trim() || '[DATA]';
+                const hasRawData = satelliteData[sat] ? satelliteData[sat].raw : false;
+                const isPan = (sat === "WorldView 1" || sat === "Eros B" || imgProcessamento === "PAN (P&B)");
+
+                let txt = `Imagem de Satélite ${sat} de ${res} de resolução espacial`;
+                
+                if (hasRawData && !sat.includes("Landsat") && !sat.includes("Sentinel") && !sat.includes("SPOT 4") && !sat.includes("SPOT 5")) {
+                    txt += `, processada em ${imgProcessamento}`;
+                }
+
+                txt += `, ortorretificada com parâmetros orbitais`;
+                
+                if (isPan) {
+                    txt += `, P&B (Pancromática)`;
+                } else if (isColor) {
+                    txt += `, colorida`;
+                }
+
+                if (isContraste) {
+                    txt += `, com e sem contraste`;
+                }
+                
+                txt += `, de data de ${dateImg}`;
+
+                imgTexts.push(txt);
+            });
+
+            let imagesPhrase = "";
+            if (imgTexts.length === 1) {
+                imagesPhrase = imgTexts[0];
+            } else if (imgTexts.length > 1) {
+                imagesPhrase = imgTexts.slice(0, -1).join("; ") + " e " + imgTexts[imgTexts.length - 1];
+            }
+
+            // MONTAGEM FINAL
+            let finalOutput = `Serviços de Geoprocessamento `;
+
+            if (fpCurrentType === 'img') {
+                finalOutput += `de ${imagesPhrase}, ${projText}${formatSuffix}${areaText}.${deliveryText}`;
+            } else if (fpCurrentType === 'alt') {
+                finalOutput += `compostos por ${altimetryPhrase}, ${projText}${areaText}.${deliveryText}`;
+            } else if (fpCurrentType === 'combo') {
+                finalOutput += `compostos por ${imagesPhrase} e ${altimetryPhrase}, ${projText}${formatSuffix}${areaText}.${deliveryText}`;
+            }
+
+            if (obsText) {
+                finalOutput += `\n\nObservações: ${obsText}`;
+            }
+
+            // Limpeza de pontuação para evitar múltiplos espaços e pontos fora do lugar
+            finalOutput = finalOutput.replace(/\s+/g, ' ').replace(/\s+\./g, '.').replace(/\.\./g, '.').trim();
+
+            document.getElementById('fp-output').value = finalOutput;
+        }
+
+
+        // ==========================================
+        // APP 4: README SCRIPT
         // ==========================================
         const folderInput = document.getElementById('folderInput');
         const btnSelectFolder = document.getElementById('btnSelectFolder');
@@ -1173,9 +1531,6 @@
 
         function processFiles(files) {
             const projectData = { interesse: [], brutos: [], processados: [] };
-            
-            // Padrão Regex para capturar a nomenclatura bruta nativa do SPOT 1 a 5
-            // Ex: "003-010_S4_698-378-0_..." ou "002-003_S5_710-400-0_..."
             const spotRawRegex = /^\d{3}-\d{3}_S[1-5]_\d{3}-\d{3}/i;
 
             for (let i = 0; i < files.length; i++) {
@@ -1196,10 +1551,7 @@
                     if (belongsTo) break;
                 }
                 
-                // Regra: Omitir os arquivos brutos poluídos do SPOT 1-5
-                if (belongsTo === 'brutos' && spotRawRegex.test(file.name)) {
-                    continue; 
-                }
+                if (belongsTo === 'brutos' && spotRawRegex.test(file.name)) continue; 
 
                 if (belongsTo) projectData[belongsTo].push({ name: file.name, path: pathToUse, subfolder: subFolderName });
             }
@@ -1207,7 +1559,7 @@
         }
 
         function generateReport(data) {
-            let sectionCounter = 1; // Contador dinâmico de seções
+            let sectionCounter = 1; 
             
             let texto = "=======================================================\n";
             texto += "        GUIA DO PROJETO - INSTRUÇÕES DE USO\n";
@@ -1229,7 +1581,6 @@
                 texto += "\n";
             }
 
-            // Apenas renderiza a seção de "Dados brutos" se houver algum arquivo após as filtragens
             if (data.brutos.length > 0) {
                 texto += "-------------------------------------------------------\n";
                 texto += ` ${sectionCounter++}. DADOS BRUTOS\n`;
@@ -1405,8 +1756,18 @@
             addImageEntry();
             document.getElementById('wetransfer-form-panel').addEventListener('input', generateMessage);
             document.getElementById('wetransfer-form-panel').addEventListener('change', generateMessage);
-            generateMessage();
             
+            // Inicializa Folha de Projeto
+            addFpImageEntry();
+            document.getElementById('folha-form-panel').addEventListener('input', generateFolha);
+            document.getElementById('folha-form-panel').addEventListener('change', generateFolha);
+
+            // Gera ambas assim que tudo estiver montado e seguro
+            setTimeout(() => {
+                generateMessage();
+                generateFolha();
+            }, 100);
+
             // Abre a primeira aba
             switchTab('tab-print-aoi');
 
@@ -1433,7 +1794,6 @@
                 });
             }
         });
-
     </script>
 </body>
 </html>
