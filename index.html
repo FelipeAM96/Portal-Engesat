@@ -67,26 +67,26 @@
         /* Variantes flex que precisam do active */
         .tab-content.active.flex-container { display: flex; }
 
-        /* Estilos do Modo Noturno */
-        html.dark body { background-color: #0f172a; color: #f1f5f9; }
-        html.dark .bg-white { background-color: #1e293b !important; border-color: #334155 !important; }
-        html.dark .bg-slate-50, html.dark .bg-gray-100 { background-color: #0f172a !important; border-color: #334155 !important; }
-        html.dark .bg-slate-200 { background-color: #334155 !important; }
-        html.dark .text-slate-800, html.dark .text-slate-900, html.dark .text-gray-800 { color: #f8fafc !important; }
-        html.dark .text-slate-700 { color: #e2e8f0 !important; }
-        html.dark .text-slate-600, html.dark .text-gray-500, html.dark .text-slate-500 { color: #94a3b8 !important; }
-        html.dark .border-slate-200, html.dark .border-slate-300, html.dark .border-gray-200 { border-color: #334155 !important; }
-        html.dark input, html.dark select, html.dark textarea { background-color: #0f172a !important; color: #f8fafc !important; border-color: #475569 !important; }
-        html.dark input:focus, html.dark select:focus, html.dark textarea:focus { border-color: #3b82f6 !important; }
-        html.dark .tab-btn:hover { color: #cbd5e1 !important; border-color: #475569 !important; }
-        html.dark .wt-type-btn:not(.active), html.dark .fp-type-btn:not(.active) { background-color: #1e293b !important; color: #cbd5e1 !important; border-color: #334155 !important; }
-        html.dark .wt-type-btn:not(.active):hover, html.dark .fp-type-btn:not(.active):hover { background-color: #334155 !important; }
-        html.dark .image-entry { background-color: #1e293b !important; border-color: #334155 !important; }
-        html.dark #copyModal .bg-slate-50 { background-color: #0f172a !important; border-color: #334155 !important; }
-        html.dark #copyModal .bg-slate-200 { background-color: #1e293b !important; }
-        html.dark header.border-blue-600 { border-color: #2563eb !important; }
-        html.dark .hover\:bg-slate-100:hover, html.dark .hover\:bg-blue-100:hover { background-color: #334155 !important; }
-        html.dark .bg-blue-50 { background-color: rgba(30, 58, 138, 0.2) !important; }
+        /* Estilos do Modo Noturno (Suavizado e com Alto Contraste) */
+        html.dark body { background-color: #1e293b; color: #f8fafc; }
+        html.dark .bg-white { background-color: #334155 !important; border-color: #475569 !important; }
+        html.dark .bg-slate-50, html.dark .bg-gray-100 { background-color: #1e293b !important; border-color: #475569 !important; }
+        html.dark .bg-slate-200 { background-color: #475569 !important; }
+        html.dark .text-slate-800, html.dark .text-slate-900, html.dark .text-gray-800 { color: #ffffff !important; }
+        html.dark .text-slate-700 { color: #f1f5f9 !important; }
+        html.dark .text-slate-600, html.dark .text-gray-500, html.dark .text-slate-500 { color: #cbd5e1 !important; }
+        html.dark .border-slate-200, html.dark .border-slate-300, html.dark .border-gray-200 { border-color: #475569 !important; }
+        html.dark input, html.dark select, html.dark textarea { background-color: #1e293b !important; color: #ffffff !important; border-color: #64748b !important; }
+        html.dark input:focus, html.dark select:focus, html.dark textarea:focus { border-color: #60a5fa !important; box-shadow: 0 0 0 1px #60a5fa !important; }
+        html.dark .tab-btn:hover { color: #f1f5f9 !important; border-color: #64748b !important; }
+        html.dark .wt-type-btn:not(.active), html.dark .fp-type-btn:not(.active) { background-color: #334155 !important; color: #cbd5e1 !important; border-color: #475569 !important; }
+        html.dark .wt-type-btn:not(.active):hover, html.dark .fp-type-btn:not(.active):hover { background-color: #475569 !important; color: #ffffff !important; }
+        html.dark .image-entry { background-color: #334155 !important; border-color: #475569 !important; }
+        html.dark #copyModal .bg-slate-50 { background-color: #1e293b !important; border-color: #475569 !important; }
+        html.dark #copyModal .bg-slate-200 { background-color: #334155 !important; }
+        html.dark header.border-blue-600 { border-color: #3b82f6 !important; }
+        html.dark .hover\:bg-slate-100:hover, html.dark .hover\:bg-blue-100:hover { background-color: #475569 !important; }
+        html.dark .bg-blue-50 { background-color: rgba(59, 130, 246, 0.15) !important; }
         
         /* Protege a área do mapa (Leaflet) para NUNCA entrar no modo noturno */
         html.dark #map { background-color: #f8f9fa !important; color: #333 !important; }
