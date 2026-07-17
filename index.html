@@ -278,7 +278,7 @@
                     </div>
 
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mt-2">
-                        <h4 class="text-sm font-semibold text-slate-700 mb-3">Formatos Entregues</h4>
+                        <h4 class="text-sm font-semibold text-slate-700 mb-3">Formatos e Opções</h4>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-2 text-sm text-slate-600">
                             <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fmt-geotif" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> GeoTIFF</label>
                             <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900"><input type="checkbox" id="fmt-kmz" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> KMZ</label>
@@ -295,13 +295,13 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Fuso UTM</label>
-                            <input type="number" id="utm-zone" min="17" max="25" value="22" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <input type="number" id="utm-zone" min="17" max="25" value="23" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Hemisfério</label>
                             <select id="utm-hemi" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                <option value="S">Sul (S)</option>
-                                <option value="N">Norte (N)</option>
+                                <option value="Sul" selected>Sul (S)</option>
+                                <option value="Norte">Norte (N)</option>
                             </select>
                         </div>
                     </div>
@@ -337,7 +337,7 @@
         <!-- ABA 3: FOLHA DE PROJETO                    -->
         <!-- ========================================== -->
         <div id="tab-folha" class="tab-content max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex-col md:flex-row border border-slate-200">
-            <!-- Left Panel -->
+            <!-- Left Panel (Formulário) -->
             <div id="folha-form-panel" class="w-full md:w-5/12 bg-slate-50 p-6 sm:p-8 border-r border-slate-200 flex flex-col gap-6 overflow-y-auto" style="max-height: 85vh;">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900 mb-1">Folha de Projeto</h1>
@@ -426,10 +426,6 @@
                                 <input type="checkbox" id="fp-img-cores" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> 
                                 Informar como Colorida / Cores Naturais
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900">
-                                <input type="checkbox" id="fp-img-contraste" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> 
-                                Informar com e sem contraste
-                            </label>
                         </div>
                     </div>
 
@@ -456,7 +452,7 @@
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Hemisfério</label>
                             <select id="fp-utm-hemi" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                <option value="S">Sul (S)</option>
+                                <option value="S" selected>Sul (S)</option>
                                 <option value="N">Norte (N)</option>
                             </select>
                         </div>
@@ -465,7 +461,7 @@
 
                 <div class="flex flex-col gap-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <label class="text-sm font-semibold text-slate-700">Observações Finais (Opcional)</label>
-                    <textarea id="fp-obs-text" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Ex: Informações adicionais ou notas para a equipe técnica..."></textarea>
+                    <textarea id="fp-obs-text" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Ex: Detalhes adicionais..."></textarea>
                 </div>
 
                 <button onclick="generateFolha()" class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98]">
@@ -619,7 +615,9 @@
                 } else {
                     throw new Error("Formato não suportado. Envie .kml ou .kmz");
                 }
+
                 processKML(kmlText);
+
             } catch (err) {
                 errorMessage.textContent = "Erro ao processar: " + err.message;
                 errorBox.classList.remove('hidden');
@@ -674,6 +672,7 @@
                     }
                 }
             }
+
             if (polygonsData.length === 0) throw new Error("Não foi possível extrair coordenadas.");
             renderMap(polygonsData);
         }
@@ -728,11 +727,25 @@
             actionsContainer.classList.remove('hidden');
 
             if (!map) {
-                const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: true });
-                const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, crossOrigin: true });
+                const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19, crossOrigin: true
+                });
 
-                map = L.map('map', { zoomControl: true, attributionControl: false, preferCanvas: true, layers: [osmLayer] });
-                L.control.layers({ "Mapa Base (OSM)": osmLayer, "Satélite (Esri)": satLayer }, null, { position: 'topleft' }).addTo(map);
+                const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    maxZoom: 19, crossOrigin: true
+                });
+
+                map = L.map('map', {
+                    zoomControl: true,
+                    attributionControl: false,
+                    preferCanvas: true,
+                    layers: [osmLayer] 
+                });
+                
+                L.control.layers({
+                    "Mapa Base (OSM)": osmLayer,
+                    "Satélite (Esri)": satLayer
+                }, null, { position: 'topleft' }).addTo(map);
 
                 const LogoControl = L.Control.extend({
                     options: { position: 'topleft' },
@@ -744,6 +757,7 @@
                     }
                 });
                 map.addControl(new LogoControl());
+
                 L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(map);
 
                 const NorthControl = L.Control.extend({
@@ -802,7 +816,11 @@
             });
 
             updateLegend(polygonsData[0].areaKm2, polygonsData[0].projectionName, polygonsData.length > 1 ? polygonsData[0].index : null);
-            setTimeout(() => { map.invalidateSize(); map.fitBounds(polygonLayer.getBounds(), { padding: [20, 20] }); }, 100);
+
+            setTimeout(() => { 
+                map.invalidateSize(); 
+                map.fitBounds(polygonLayer.getBounds(), { padding: [20, 20] }); 
+            }, 100);
         }
 
         async function generateMapCanvas() {
@@ -811,15 +829,18 @@
             const layersControl = document.querySelector('.leaflet-control-layers'); 
 
             if (zoomControl) zoomControl.style.display = 'none';
-            if (layersControl) layersControl.style.display = 'none';
+            if (layersControl) layersControl.style.display = 'none'; 
 
-            const originalScrollX = window.scrollX; const originalScrollY = window.scrollY;
+            const originalScrollX = window.scrollX;
+            const originalScrollY = window.scrollY;
             window.scrollTo(0, 0);
 
             await new Promise(r => setTimeout(r, 500));
 
             try {
-                const canvas = await html2canvas(mapNode, { useCORS: true, allowTaint: false, backgroundColor: '#ffffff', scale: 2 });
+                const canvas = await html2canvas(mapNode, {
+                    useCORS: true, allowTaint: false, backgroundColor: '#ffffff', scale: 2
+                });
                 return canvas;
             } finally {
                 if (zoomControl) zoomControl.style.display = '';
@@ -830,7 +851,8 @@
 
         downloadBtn.addEventListener('click', async () => {
             const originalText = downloadBtn.innerHTML;
-            downloadBtn.innerHTML = 'Processando...'; downloadBtn.disabled = true;
+            downloadBtn.innerHTML = 'Processando...';
+            downloadBtn.disabled = true;
 
             try {
                 const canvas = await generateMapCanvas();
@@ -838,8 +860,12 @@
                 link.download = `${currentFileName}_Mapa.png`;
                 link.href = canvas.toDataURL('image/png', 1.0);
                 link.click();
-            } catch (err) { alert("Erro ao gerar imagem.");
-            } finally { downloadBtn.innerHTML = originalText; downloadBtn.disabled = false; }
+            } catch (err) {
+                alert("Erro ao gerar imagem.");
+            } finally {
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+            }
         });
 
         document.getElementById('closeModalBtn').addEventListener('click', () => {
@@ -848,7 +874,8 @@
 
         copyBtn.addEventListener('click', async () => {
             const originalText = copyBtn.innerHTML;
-            copyBtn.innerHTML = 'Copiando...'; copyBtn.disabled = true;
+            copyBtn.innerHTML = 'Copiando...';
+            copyBtn.disabled = true;
 
             try {
                 const canvas = await generateMapCanvas();
@@ -870,12 +897,14 @@
                         const imgUrl = canvas.toDataURL('image/png', 1.0);
                         document.getElementById('modalImage').src = imgUrl;
                         document.getElementById('copyModal').classList.remove('hidden');
-                        copyBtn.innerHTML = originalText; copyBtn.disabled = false;
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.disabled = false;
                     }
                 }, 'image/png', 1.0);
             } catch (err) {
                 alert("Erro ao copiar.");
-                copyBtn.disabled = false; copyBtn.innerHTML = originalText;
+                copyBtn.disabled = false;
+                copyBtn.innerHTML = originalText;
             }
         });
 
@@ -883,8 +912,12 @@
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
         });
-        ['dragenter', 'dragover'].forEach(eventName => { dropZone.addEventListener(eventName, () => dropZone.classList.add('bg-blue-200'), false); });
-        ['dragleave', 'drop'].forEach(eventName => { dropZone.addEventListener(eventName, () => dropZone.classList.remove('bg-blue-200'), false); });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('bg-blue-200'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('bg-blue-200'), false);
+        });
         dropZone.addEventListener('drop', (e) => {
             fileInput.files = e.dataTransfer.files;
             fileInput.dispatchEvent(new Event('change'));
@@ -894,10 +927,10 @@
         // CONFIGURAÇÕES GERAIS (Satélites)
         // ==========================================
         const satelliteData = {
-            "Pleiades Neo": { res: ["30 cm"], raw: true }, "Pleiades": { res: ["50 cm"], raw: true },
+            "Pleiades Neo": { res: ["30 cm", "15 cm"], raw: true }, "Pleiades": { res: ["50 cm"], raw: true },
             "SPOT 6": { res: ["1,5 m"], raw: true }, "SPOT 5": { res: ["2,5 m", "5 m", "10 m"], raw: false },
             "SPOT 4": { res: ["10 m"], raw: false }, "Jilin": { res: ["30 cm", "50 cm", "75 cm"], raw: true },
-            "Legion": { res: ["15 cm", "30 cm"], raw: true }, "WorldView 1": { res: ["50 cm"], raw: true },
+            "Legion": { res: ["30 cm", "15 cm"], raw: true }, "WorldView 1": { res: ["50 cm"], raw: true },
             "WorldView 2": { res: ["50 cm"], raw: true }, "WorldView 3": { res: ["30 cm"], raw: true },
             "WorldView 4": { res: ["30 cm"], raw: true }, "Kompsat 3A": { res: ["40 cm"], raw: true },
             "Kompsat 3": { res: ["70 cm"], raw: true }, "Kompsat 2": { res: ["1 m"], raw: true },
@@ -947,7 +980,6 @@
 
         function addImageEntry() {
             const container = document.getElementById('images-container');
-            if(!container) return;
             const entryCount = container.children.length;
             const entry = document.createElement('div');
             entry.className = "image-entry bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative flex flex-col gap-3 transition-all";
@@ -1010,7 +1042,6 @@
                 if (bandasInput) bandasInput.value = '1';
                 if (coresInput) coresInput.checked = false;
             } else {
-                // Caso troque para satélite colorido, restaura valores padrão se estavam em PAN
                 if (processamentoSelect && processamentoSelect.value === 'PAN (P&B)') {
                     processamentoSelect.value = 'Modo PSM';
                 }
@@ -1034,7 +1065,6 @@
                 if (bandasInput) bandasInput.value = '1';
                 if (coresInput) coresInput.checked = false;
             } else {
-                // Restaura o valor padrão se estava em PAN e o utilizador alterou o modo
                 if (bandasInput && bandasInput.value === '1') {
                     bandasInput.value = bandasId === 'img-bandas' ? '3 e 4' : '4';
                 }
@@ -1042,15 +1072,21 @@
                     coresInput.checked = true;
                 }
             }
+            
+            if (selectElement.id === 'img-processamento') generateMessage();
+            if (selectElement.id === 'fp-img-processamento') generateFolha();
         }
 
         function generateMessage() {
-            // Se os elementos não existirem (ainda renderizando), sai suavemente
-            if (!document.getElementById('utm-zone') || !document.getElementById('fmt-geotif')) return;
+            const fusoElem = document.getElementById('utm-zone');
+            if (!fusoElem) return;
 
-            const fuso = document.getElementById('utm-zone').value;
-            const hemi = document.getElementById('utm-hemi').value;
-            const projecao = `UTM ${fuso} ${hemi === 'Sul' ? 'Sul' : 'Norte'} SIRGAS 2000`;
+            const fuso = fusoElem.value;
+            const hemiVal = document.getElementById('utm-hemi').value;
+            // Garante logicamente que a string seja exata (Sul ou Norte) baseado na seleção
+            const hemiStr = hemiVal.startsWith('S') ? 'Sul' : 'Norte';
+            
+            const projecao = `UTM ${fuso} ${hemiStr} SIRGAS 2000`;
             const altProduct = document.getElementById('alt-product').value;
             const altRes = altProduct.includes('Neo') ? '5m' : '12m';
             const altModel = document.getElementById('alt-model').value;
@@ -1165,7 +1201,6 @@
 
         function addFpImageEntry() {
             const container = document.getElementById('fp-images-container');
-            if(!container) return;
             const entryCount = container.children.length;
             const entry = document.createElement('div');
             entry.className = "image-entry fp-image-entry bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative flex flex-col gap-3 transition-all";
@@ -1199,27 +1234,25 @@
         }
 
         function generateFolha() {
-            if (!document.getElementById('fp-utm-zone') || !document.getElementById('fp-fmt-geotif')) return;
+            const fusoElem = document.getElementById('fp-utm-zone');
+            if (!fusoElem) return;
 
-            // Geral
             const areaName = document.getElementById('fp-area-name').value.trim();
             const delivery = document.getElementById('fp-delivery').value.trim();
-            const fuso = document.getElementById('fp-utm-zone').value;
-            const hemi = document.getElementById('fp-utm-hemi').value; // 'S' ou 'N'
-            const obsText = document.getElementById('fp-obs-text').value.trim();
+            const fuso = fusoElem.value;
+            const hemiVal = document.getElementById('fp-utm-hemi').value;
+            // Garante que é extraída de forma lógica S ou N
+            const hemiChar = hemiVal.startsWith('S') ? 'S' : 'N';
+            const fusoText = `${fuso}${hemiChar}`;
             
-            // Textos dinâmicos base
-            const projText = `sistema de coordenadas UTM SIRGAS 2000, fuso ${fuso}${hemi === 'Sul' || hemi === 'S' ? 'S' : 'N'}`;
+            const projText = `sistema de coordenadas UTM SIRGAS 2000, fuso ${fusoText}`;
             const areaText = areaName ? `, área de ${areaName}` : ``;
-            let deliveryText = "";
-            if (delivery) {
-                deliveryText = delivery.endsWith('.') ? ` ${delivery}` : ` ${delivery}.`;
-            }
+            const deliveryText = delivery ? `. ${delivery}` : ``;
 
             // ALTIMETRIA
             const altProduct = document.getElementById('fp-alt-product').value;
             const altRes = altProduct.includes('Neo') ? '5 metros' : '12 metros';
-            const altModel = document.getElementById('fp-alt-model').value; 
+            const altModel = document.getElementById('fp-alt-model').value;
             const altContour = document.getElementById('fp-alt-contour').value;
             
             let altimetryPhrase = `Modelo Digital de Terreno ${altProduct} de ${altRes} de resolução espacial, contendo ${altModel}`;
@@ -1230,11 +1263,10 @@
 
             // IMAGEM
             let imgTexts = [];
-            const imgProcessamento = document.getElementById('fp-img-processamento') ? document.getElementById('fp-img-processamento').value : 'Modo PSM';
+            const imgProcessamento = document.getElementById('fp-img-processamento').value;
             const imgBits = document.getElementById('fp-img-bits').value;
             const imgBandas = document.getElementById('fp-img-bandas').value;
             const isColor = document.getElementById('fp-img-cores').checked;
-            const isContraste = document.getElementById('fp-img-contraste').checked;
             
             const formatOptions = {
                 geotif: document.getElementById('fp-fmt-geotif').checked, 
@@ -1244,25 +1276,6 @@
                 shp: document.getElementById('fp-fmt-shp').checked, 
                 carta: document.getElementById('fp-opt-carta').checked
             };
-
-            let formats = [];
-            if(formatOptions.geotif) formats.push("GeoTIFF");
-            if(formatOptions.kmz) formats.push("KMZ");
-            if(formatOptions.ecw) formats.push("ECW");
-            if(formatOptions.dwg) formats.push("DWG");
-            if(formatOptions.shp) formats.push("SHP");
-
-            let formatsStr = formats.length > 1 ? formats.slice(0, -1).join(", ") + " e " + formats[formats.length - 1] : formats[0] || "";
-            
-            let formatSuffix = "";
-            if (formatsStr) {
-                formatSuffix = `, entregue em ${formatsStr}`;
-                if (imgBits) formatSuffix += ` ${imgBits} bits`;
-                if (imgBandas) formatSuffix += ` com ${imgBandas} bandas espectrais`;
-            }
-            if (formatOptions.carta) {
-                formatSuffix += ` e acompanhada de Carta Imagem`;
-            }
 
             document.querySelectorAll('#fp-images-container .fp-image-entry').forEach((entry) => {
                 const sat = entry.querySelector('.img-satellite').value;
@@ -1284,40 +1297,46 @@
                 } else if (isColor) {
                     txt += `, colorida`;
                 }
-
-                if (isContraste) {
-                    txt += `, com e sem contraste`;
-                }
                 
                 txt += `, de data de ${dateImg}`;
+
+                let formats = [];
+                if(formatOptions.geotif) formats.push("GeoTIFF");
+                if(formatOptions.kmz) formats.push("KMZ");
+                if(formatOptions.ecw) formats.push("ECW");
+                if(formatOptions.dwg) formats.push("DWG");
+                if(formatOptions.shp) formats.push("SHP");
+
+                let formatsStr = formats.length > 1 ? formats.slice(0, -1).join(", ") + " e " + formats[formats.length - 1] : formats[0] || "";
+                
+                if (formatsStr) {
+                    txt += `, entregue em ${formatsStr} ${imgBits} bits com ${imgBandas} bandas espectrais`;
+                }
+
+                if (formatOptions.carta) {
+                    txt += ` e acompanhada de Carta Imagem`;
+                }
 
                 imgTexts.push(txt);
             });
 
-            let imagesPhrase = "";
-            if (imgTexts.length === 1) {
-                imagesPhrase = imgTexts[0];
-            } else if (imgTexts.length > 1) {
-                imagesPhrase = imgTexts.slice(0, -1).join("; ") + " e " + imgTexts[imgTexts.length - 1];
-            }
+            const imagesPhrase = imgTexts.join(" e ");
 
             // MONTAGEM FINAL
             let finalOutput = `Serviços de Geoprocessamento `;
 
             if (fpCurrentType === 'img') {
-                finalOutput += `de ${imagesPhrase}, ${projText}${formatSuffix}${areaText}.${deliveryText}`;
+                finalOutput += `de ${imagesPhrase}${areaText}, ${projText}${deliveryText}`;
             } else if (fpCurrentType === 'alt') {
-                finalOutput += `compostos por ${altimetryPhrase}, ${projText}${areaText}.${deliveryText}`;
+                finalOutput += `compostos por ${altimetryPhrase}${areaText}, ${projText}${deliveryText}`;
             } else if (fpCurrentType === 'combo') {
-                finalOutput += `compostos por ${imagesPhrase} e ${altimetryPhrase}, ${projText}${formatSuffix}${areaText}.${deliveryText}`;
+                finalOutput += `compostos por ${imagesPhrase} e ${altimetryPhrase}${areaText}, ${projText}${deliveryText}`;
             }
 
+            const obsText = document.getElementById('fp-obs-text').value.trim();
             if (obsText) {
                 finalOutput += `\n\nObservações: ${obsText}`;
             }
-
-            // Limpeza de pontuação para evitar múltiplos espaços e pontos fora do lugar
-            finalOutput = finalOutput.replace(/\s+/g, ' ').replace(/\s+\./g, '.').replace(/\.\./g, '.').trim();
 
             document.getElementById('fp-output').value = finalOutput;
         }
@@ -1531,6 +1550,7 @@
 
         function processFiles(files) {
             const projectData = { interesse: [], brutos: [], processados: [] };
+            
             const spotRawRegex = /^\d{3}-\d{3}_S[1-5]_\d{3}-\d{3}/i;
 
             for (let i = 0; i < files.length; i++) {
@@ -1752,26 +1772,18 @@
         // INIT GERAL
         // ==========================================
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicializa WeTransfer
             addImageEntry();
             document.getElementById('wetransfer-form-panel').addEventListener('input', generateMessage);
             document.getElementById('wetransfer-form-panel').addEventListener('change', generateMessage);
+            generateMessage();
             
-            // Inicializa Folha de Projeto
             addFpImageEntry();
             document.getElementById('folha-form-panel').addEventListener('input', generateFolha);
             document.getElementById('folha-form-panel').addEventListener('change', generateFolha);
+            generateFolha();
 
-            // Gera ambas assim que tudo estiver montado e seguro
-            setTimeout(() => {
-                generateMessage();
-                generateFolha();
-            }, 100);
-
-            // Abre a primeira aba
             switchTab('tab-print-aoi');
 
-            // Lógica do Modo Noturno (Dark Mode)
             const themeToggleBtn = document.getElementById('themeToggleBtn');
             const themeIcon = document.getElementById('themeIcon');
             const htmlElement = document.documentElement;
