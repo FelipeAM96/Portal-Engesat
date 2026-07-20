@@ -239,17 +239,13 @@
                 <div id="block-image" class="flex flex-col gap-4">
                     <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Dados de Imagem</h3>
                     <div id="images-container" class="flex flex-col gap-4"></div>
-                    <button type="button" onclick="addImageEntry()" class="text-sm text-blue-600 font-medium hover:text-blue-800 flex items-center gap-1 self-start transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Adicionar outro satélite
-                    </button>
-                    
+                    <!-- Novas opções de Processamento e Radiometria -->
                     <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mt-2">
                         <h4 class="text-sm font-semibold text-slate-700 mb-3">Parâmetros de Processamento</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Modo</label>
-                                <select id="img-processamento" onchange="handleModoChange(this, 'img-bandas', 'img-cores')" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <select id="img-processamento" onchange="handleModoChange(this, 'img-bandas', 'img-cores', 'img-falsas-cores')" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                                     <option value="Modo PSM" selected>Modo PSM</option>
                                     <option value="BUNDLE e Modo PSM">BUNDLE e Modo PSM</option>
                                     <option value="BUNDLE">BUNDLE</option>
@@ -269,6 +265,10 @@
                             <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900">
                                 <input type="checkbox" id="img-cores" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> 
                                 Informar "- Cores naturais"
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900">
+                                <input type="checkbox" id="img-falsas-cores" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> 
+                                Informar "- Falsas cores"
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900">
                                 <input type="checkbox" id="img-contraste" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> 
@@ -405,7 +405,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Modo</label>
-                                <select id="fp-img-processamento" onchange="handleModoChange(this, 'fp-img-bandas', 'fp-img-cores')" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <select id="fp-img-processamento" onchange="handleModoChange(this, 'fp-img-bandas', 'fp-img-cores', 'fp-img-falsas-cores')" class="w-full rounded-lg border-slate-300 border p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                                     <option value="Modo PSM" selected>Modo PSM</option>
                                     <option value="BUNDLE e Modo PSM">BUNDLE e Modo PSM</option>
                                     <option value="BUNDLE">BUNDLE</option>
@@ -425,6 +425,14 @@
                             <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900">
                                 <input type="checkbox" id="fp-img-cores" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> 
                                 Informar como Colorida / Cores Naturais
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900">
+                                <input type="checkbox" id="fp-img-falsas-cores" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> 
+                                Informar como Falsas Cores
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer hover:text-slate-900">
+                                <input type="checkbox" id="fp-img-contraste" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> 
+                                Informar "- Com e sem contraste"
                             </label>
                         </div>
                     </div>
@@ -1032,16 +1040,20 @@
             const processamentoId = isWeTransfer ? 'img-processamento' : 'fp-img-processamento';
             const bandasId = isWeTransfer ? 'img-bandas' : 'fp-img-bandas';
             const coresId = isWeTransfer ? 'img-cores' : 'fp-img-cores';
+            const falsasCoresId = isWeTransfer ? 'img-falsas-cores' : 'fp-img-falsas-cores';
             
             const processamentoSelect = document.getElementById(processamentoId);
             const bandasInput = document.getElementById(bandasId);
             const coresInput = document.getElementById(coresId);
+            const falsasCoresInput = document.getElementById(falsasCoresId);
 
             if (sat === 'WorldView 1' || sat === 'Eros B') {
                 if (processamentoSelect) processamentoSelect.value = 'PAN (P&B)';
                 if (bandasInput) bandasInput.value = '1';
                 if (coresInput) coresInput.checked = false;
+                if (falsasCoresInput) falsasCoresInput.checked = false;
             } else {
+                // Caso troque para satélite colorido, restaura valores padrão se estavam em PAN
                 if (processamentoSelect && processamentoSelect.value === 'PAN (P&B)') {
                     processamentoSelect.value = 'Modo PSM';
                 }
@@ -1057,14 +1069,17 @@
             if (isFolha) generateFolha();
         }
 
-        function handleModoChange(selectElement, bandasId, coresId) {
+        function handleModoChange(selectElement, bandasId, coresId, falsasCoresId) {
             const bandasInput = document.getElementById(bandasId);
             const coresInput = document.getElementById(coresId);
+            const falsasCoresInput = document.getElementById(falsasCoresId);
             
             if (selectElement.value === 'PAN (P&B)') {
                 if (bandasInput) bandasInput.value = '1';
                 if (coresInput) coresInput.checked = false;
+                if (falsasCoresInput) falsasCoresInput.checked = false;
             } else {
+                // Restaura o valor padrão se estava em PAN e o utilizador alterou o modo
                 if (bandasInput && bandasInput.value === '1') {
                     bandasInput.value = bandasId === 'img-bandas' ? '3 e 4' : '4';
                 }
@@ -1078,13 +1093,13 @@
         }
 
         function generateMessage() {
+            // Se os elementos não existirem (ainda renderizando), sai suavemente
             const fusoElem = document.getElementById('utm-zone');
             if (!fusoElem) return;
 
             const fuso = fusoElem.value;
             const hemiVal = document.getElementById('utm-hemi').value;
-            // Garante logicamente que a string seja exata (Sul ou Norte) baseado na seleção
-            const hemiStr = hemiVal.startsWith('S') ? 'Sul' : 'Norte';
+            const hemiStr = (hemiVal === 'Norte' || hemiVal === 'N') ? 'Norte' : 'Sul';
             
             const projecao = `UTM ${fuso} ${hemiStr} SIRGAS 2000`;
             const altProduct = document.getElementById('alt-product').value;
@@ -1097,6 +1112,7 @@
             const imgBits = document.getElementById('img-bits') ? document.getElementById('img-bits').value : '8';
             const imgBandas = document.getElementById('img-bandas') ? document.getElementById('img-bandas').value : '3 e 4';
             const imgCores = document.getElementById('img-cores') ? document.getElementById('img-cores').checked : true;
+            const imgFalsasCores = document.getElementById('img-falsas-cores') ? document.getElementById('img-falsas-cores').checked : false;
             const imgContraste = document.getElementById('img-contraste') ? document.getElementById('img-contraste').checked : true;
 
             const formatOptions = {
@@ -1114,7 +1130,7 @@
                 const dataImg = entry.querySelector('.img-date').value.trim() || '[DATA NÃO INFORMADA]';
                 const hasRawData = satelliteData[sat] ? satelliteData[sat].raw : false;
 
-                imgBlocksText += getImagemBlock(sat, res, dataImg, projecao, hasRawData, formatOptions, imgProcessamento, imgBits, imgCores, imgContraste, imgBandas);
+                imgBlocksText += getImagemBlock(sat, res, dataImg, projecao, hasRawData, formatOptions, imgProcessamento, imgBits, imgCores, imgFalsasCores, imgContraste, imgBandas);
                 if (index < arr.length - 1) imgBlocksText += `\n`; 
             });
 
@@ -1129,7 +1145,7 @@
             document.getElementById('wt-output').value = msg;
         }
 
-        function getImagemBlock(sat, res, dataImg, projecao, hasRawData, formatOptions, imgProcessamento, imgBits, imgCores, imgContraste, imgBandas) {
+        function getImagemBlock(sat, res, dataImg, projecao, hasRawData, formatOptions, imgProcessamento, imgBits, imgCores, imgFalsasCores, imgContraste, imgBandas) {
             let block = `- Imagem ${sat}\n`;
             const isPan = (sat === "WorldView 1" || sat === "Eros B" || imgProcessamento === "PAN (P&B)");
             
@@ -1156,6 +1172,7 @@
                 block += `- Imagem P&B (Pancromática)\n`;
             } else {
                 if (imgCores) block += `- Cores naturais\n`;
+                if (imgFalsasCores) block += `- Falsas cores\n`;
             }
             
             if (imgContraste) block += `- Com e sem contraste\n`;
@@ -1267,6 +1284,8 @@
             const imgBits = document.getElementById('fp-img-bits').value;
             const imgBandas = document.getElementById('fp-img-bandas').value;
             const isColor = document.getElementById('fp-img-cores').checked;
+            const isFalsasCores = document.getElementById('fp-img-falsas-cores').checked;
+            const isContraste = document.getElementById('fp-img-contraste').checked;
             
             const formatOptions = {
                 geotif: document.getElementById('fp-fmt-geotif').checked, 
@@ -1294,12 +1313,20 @@
                 
                 if (isPan) {
                     txt += `, P&B (Pancromática)`;
-                } else if (isColor) {
-                    txt += `, colorida`;
+                } else {
+                    let colorArr = [];
+                    if (isColor) colorArr.push("colorida");
+                    if (isFalsasCores) colorArr.push("em falsas cores");
+                    if (colorArr.length > 0) txt += `, ${colorArr.join(" e ")}`;
+                }
+
+                if (isContraste) {
+                    txt += `, com e sem contraste`;
                 }
                 
                 txt += `, de data de ${dateImg}`;
 
+                // Processar formatos
                 let formats = [];
                 if(formatOptions.geotif) formats.push("GeoTIFF");
                 if(formatOptions.kmz) formats.push("KMZ");
