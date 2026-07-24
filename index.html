@@ -75,19 +75,17 @@
         html.dark .tab-btn:hover { color: #f1f5f9 !important; border-color: #64748b !important; }
         html.dark .wt-type-btn:not(.active), html.dark .fp-type-btn:not(.active) { background-color: #334155 !important; color: #cbd5e1 !important; border-color: #475569 !important; }
         html.dark .wt-type-btn:not(.active):hover, html.dark .fp-type-btn:not(.active):hover { background-color: #475569 !important; color: #ffffff !important; }
-        html.dark .image-entry, html.dark .area-settings { background-color: #334155 !important; border-color: #475569 !important; }
+        html.dark .area-entry, html.dark .image-entry, html.dark .area-settings { background-color: #334155 !important; border-color: #475569 !important; }
         html.dark #copyModal .bg-slate-50 { background-color: #1e293b !important; border-color: #475569 !important; }
         html.dark #copyModal .bg-slate-200 { background-color: #334155 !important; }
         html.dark header.border-blue-600 { border-color: #3b82f6 !important; }
         html.dark .hover\:bg-slate-100:hover, html.dark .hover\:bg-blue-100:hover { background-color: #475569 !important; }
         html.dark .bg-blue-50 { background-color: rgba(59, 130, 246, 0.15) !important; }
-        
         html.dark #map { background-color: #f8f9fa !important; color: #333 !important; }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col transition-colors duration-300">
 
-    <!-- Navbar / Tabs -->
     <div class="bg-white shadow-md z-50 sticky top-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16 border-b border-gray-200">
@@ -119,12 +117,8 @@
         </div>
     </div>
 
-    <!-- Main Content Area -->
     <main class="flex-grow p-4 sm:p-8">
 
-        <!-- ========================================== -->
-        <!-- ABA 1: PRINT AOI                           -->
-        <!-- ========================================== -->
         <div id="tab-print-aoi" class="tab-content active max-w-5xl mx-auto w-full">
             <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div class="bg-blue-600 p-6 text-white text-center">
@@ -163,7 +157,7 @@
                 </div>
             </div>
 
-            <!-- Modal Copia AOI -->
+            <!-- Modal Copia Manual -->
             <div id="copyModal" class="hidden fixed inset-0 z-[1000] bg-black/80 flex items-center justify-center p-4">
                 <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
                     <div class="p-4 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
@@ -181,9 +175,6 @@
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- ABA 2: WETRANSFER GENERATOR                -->
-        <!-- ========================================== -->
         <div id="tab-wetransfer" class="tab-content max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex-col md:flex-row border border-slate-200">
             <div id="wetransfer-form-panel" class="w-full md:w-5/12 bg-slate-50 p-6 sm:p-8 border-r border-slate-200 flex flex-col gap-6 overflow-y-auto" style="max-height: 85vh;">
                 <div>
@@ -200,7 +191,7 @@
                     </div>
                 </div>
 
-                <div id="block-altimetry" class="hidden flex-col gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div id="wt-block-altimetry" class="hidden flex-col gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Dados Altimétricos</h3>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Produto</label>
@@ -223,6 +214,7 @@
                             <option value="1 m">1 m de equidistância</option>
                             <option value="2 m" selected>2 m de equidistância</option>
                             <option value="1 m e 2 m">1 m e 2 m de equidistância</option>
+                            <option value="N/A">Não incluir curvas</option>
                         </select>
                     </div>
                     <div class="grid grid-cols-2 gap-4 mt-2 pt-4 border-t border-slate-100">
@@ -240,7 +232,7 @@
                     </div>
                 </div>
 
-                <div id="block-image" class="flex flex-col gap-4">
+                <div id="wt-block-image" class="flex flex-col gap-4">
                     <div class="flex justify-between items-end">
                         <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Áreas e Imagens</h3>
                         <button type="button" onclick="addArea('wt')" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 py-1 px-3 rounded font-medium transition-colors shadow-sm">
@@ -250,9 +242,9 @@
                     <div id="wt-areas-container" class="flex flex-col gap-4"></div>
                 </div>
 
-                <div class="flex flex-col gap-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div class="flex flex-col gap-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm mt-2">
                     <label class="text-sm font-semibold text-slate-700">Observações Finais (Opcional)</label>
-                    <textarea id="obs-text" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Ex: Segue também a Carta Imagem em anexo..."></textarea>
+                    <textarea id="obs-text" rows="2" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Ex: Detalhes adicionais..."></textarea>
                 </div>
 
                 <button onclick="generateMessage()" class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98]">
@@ -260,7 +252,6 @@
                 </button>
             </div>
 
-            <!-- Right Panel -->
             <div class="w-full md:w-7/12 bg-white p-6 sm:p-8 flex flex-col relative" style="min-height: 50vh;">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-slate-800">Resultado Final</h2>
@@ -276,9 +267,6 @@
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- ABA 3: FOLHA DE PROJETO                    -->
-        <!-- ========================================== -->
         <div id="tab-folha" class="tab-content max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex-col md:flex-row border border-slate-200">
             <div id="folha-form-panel" class="w-full md:w-5/12 bg-slate-50 p-6 sm:p-8 border-r border-slate-200 flex flex-col gap-6 overflow-y-auto" style="max-height: 85vh;">
                 <div>
@@ -322,9 +310,9 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Curvas de Nível</label>
                         <select id="fp-alt-contour" class="w-full rounded-lg border-slate-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="1 metro">1 metro de equidistância</option>
-                            <option value="2 metros" selected>2 metros de equidistância</option>
-                            <option value="1 e 2 metros">1 e 2 metros de equidistância</option>
+                            <option value="1 m">1 metro de equidistância</option>
+                            <option value="2 m" selected>2 metros de equidistância</option>
+                            <option value="1 m e 2 m">1 e 2 metros de equidistância</option>
                             <option value="N/A">Não incluir curvas</option>
                         </select>
                     </div>
@@ -363,7 +351,6 @@
                 </button>
             </div>
 
-            <!-- Right Panel -->
             <div class="w-full md:w-7/12 bg-white p-6 sm:p-8 flex flex-col relative" style="min-height: 50vh;">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-slate-800">Texto para Folha de Projeto</h2>
@@ -379,9 +366,6 @@
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- ABA 4: README GENERATOR                    -->
-        <!-- ========================================== -->
         <div id="tab-readme" class="tab-content max-w-4xl mx-auto w-full">
             <header class="bg-white rounded-xl shadow-sm p-6 mb-6 border-t-4 border-blue-600">
                 <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
@@ -429,9 +413,6 @@
     </main>
 
     <script>
-        // ==========================================
-        // LÓGICA GERAL & TAB NAVIGATION
-        // ==========================================
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => { el.classList.remove('active', 'flex-container'); });
             document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -439,11 +420,15 @@
                 btn.classList.add('border-transparent', 'text-gray-500');
             });
             const targetTab = document.getElementById(tabId);
-            targetTab.classList.add('active');
-            if (tabId === 'tab-wetransfer' || tabId === 'tab-folha') targetTab.classList.add('flex-container');
+            if(targetTab) {
+                targetTab.classList.add('active');
+                if (tabId === 'tab-wetransfer' || tabId === 'tab-folha') targetTab.classList.add('flex-container');
+            }
             const activeBtn = document.getElementById('btn-' + tabId);
-            activeBtn.classList.add('border-blue-600', 'text-blue-600');
-            activeBtn.classList.remove('border-transparent', 'text-gray-500');
+            if(activeBtn) {
+                activeBtn.classList.add('border-blue-600', 'text-blue-600');
+                activeBtn.classList.remove('border-transparent', 'text-gray-500');
+            }
             if (tabId === 'tab-print-aoi' && map) setTimeout(() => map.invalidateSize(), 100);
         }
 
@@ -456,9 +441,6 @@
             setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 2500);
         }
 
-        // ==========================================
-        // APP 1: PRINT AOI (LÓGICA INTACTA)
-        // ==========================================
         const fileInput = document.getElementById('fileInput');
         const fileLabel = document.getElementById('fileLabel');
         const canvasContainer = document.getElementById('canvasContainer');
@@ -685,9 +667,6 @@
         ['dragleave', 'drop'].forEach(eventName => { dropZone.addEventListener(eventName, () => dropZone.classList.remove('bg-blue-200'), false); });
         dropZone.addEventListener('drop', (e) => { fileInput.files = e.dataTransfer.files; fileInput.dispatchEvent(new Event('change')); }, false);
 
-        // ==========================================
-        // CONFIGURAÇÕES GERAIS (Satélites e Áreas)
-        // ==========================================
         const satelliteData = {
             "Pleiades Neo": { res: ["30 cm", "15 cm"], raw: true }, "Pleiades": { res: ["50 cm"], raw: true },
             "SPOT 6": { res: ["1,5 m"], raw: true }, "SPOT 5": { res: ["2,5 m", "5 m", "10 m"], raw: false },
@@ -710,18 +689,18 @@
             let html = ''; for (let sat in satelliteData) { html += `<option value="${sat}">${sat}</option>`; } return html;
         }
 
-        // Adiciona uma nova Área. Copia as definições da última área existente, se houver.
+        // Logic to dynamically add Areas inside WeTransfer and Folha de Projeto
         function addArea(app) {
             const containerId = app === 'wt' ? 'wt-areas-container' : 'fp-areas-container';
             const container = document.getElementById(containerId);
+            if (!container) return; // safety check
             
-            // Valores Default
+            // Default Values or Copy from last area
             let lastZone = app === 'wt' ? "23" : "22", lastHemi = "S";
             let lastProc = "Modo PSM", lastBits = "8", lastBandas = app === 'wt' ? "3 e 4" : "4";
             let lastCor = true, lastFalsa = false, lastCont = true;
             let lastGeo = true, lastKmz = true, lastEcw = false, lastDwg = false, lastShp = false, lastCarta = false;
 
-            // Tenta copiar da última área adicionada
             if (container.children.length > 0) {
                 const lastArea = container.lastElementChild;
                 if(lastArea.querySelector('.utm-zone')) {
@@ -877,7 +856,6 @@
                 });
             }
             
-            // Automação: Setar PAN default para WV1 e Eros B
             const area = selectElement.closest('.area-entry');
             if (area) {
                 const processamentoSelect = area.querySelector('.img-processamento');
@@ -907,17 +885,14 @@
             if (selectElement.closest('#tab-folha')) generateFolha();
         }
 
-        // ==========================================
-        // APP 2: WETRANSFER GENERATOR
-        // ==========================================
         let wtCurrentType = 'img';
         function setWtType(type) {
             wtCurrentType = type;
             document.querySelectorAll('.wt-type-btn').forEach(btn => btn.className = "wt-type-btn py-2 px-3 text-sm font-medium rounded-lg border-2 border-transparent bg-white shadow-sm text-slate-600 hover:bg-slate-100 transition-colors");
             document.getElementById(`btn-type-${type}`).className = "wt-type-btn active py-2 px-3 text-sm font-medium rounded-lg border-2 border-blue-600 bg-blue-50 text-blue-700 transition-colors";
 
-            const blockImg = document.getElementById('block-image');
-            const blockAlt = document.getElementById('block-altimetry');
+            const blockImg = document.getElementById('wt-block-image');
+            const blockAlt = document.getElementById('wt-block-altimetry');
 
             if (type === 'img') { blockImg.classList.replace('hidden', 'flex'); blockAlt.classList.replace('flex', 'hidden'); } 
             else if (type === 'alt') { blockAlt.classList.replace('hidden', 'flex'); blockImg.classList.replace('flex', 'hidden'); } 
@@ -929,7 +904,10 @@
             let block = `- Imagem ${sat}\n`;
             const isPan = (sat === "WorldView 1" || sat === "Eros B" || processamento === "PAN (P&B)");
             
-            if (hasRawData && !sat.includes("Landsat") && !sat.includes("Sentinel") && !sat.includes("SPOT 4") && !sat.includes("SPOT 5")) block += `- ${processamento}\n`;
+            if (hasRawData && !sat.includes("Landsat") && !sat.includes("Sentinel") && !sat.includes("SPOT 4") && !sat.includes("SPOT 5")) {
+                block += `- ${processamento}\n`;
+            }
+
             block += `- ${res} de resolução espacial\n- Data(s) de aquisição: ${dataImg}\n- ${projecao}\n- Ortoretificada com parâmetros orbitais\n`;
             
             if (isPan) block += `- 1 banda (Pancromática)\n`;
@@ -945,8 +923,9 @@
             
             block += `- ${bits} bits\n`;
             
-            if (isPan) block += `- Imagem P&B (Pancromática)\n`;
-            else {
+            if (isPan) {
+                block += `- Imagem P&B (Pancromática)\n`;
+            } else {
                 if (cores) block += `- Cores naturais\n`;
                 if (falsas) block += `- Falsas cores\n`;
             }
@@ -954,6 +933,7 @@
             
             if (hasRawData) block += `- Dados brutos acompanham\n- Metadados da imagem original utilizada acompanham\n`;
             else block += `- Metadados das imagens originais utilizadas acompanham\n`;
+            
             return block;
         }
 
@@ -1002,8 +982,8 @@
                 const altHemiStr = document.getElementById('alt-utm-hemi').value === 'N' ? 'Norte' : 'Sul';
                 const altProj = `UTM ${altFuso} ${altHemiStr} SIRGAS 2000`;
                 
-                let contourTxt = altContour !== "N/A" ? `- Curvas de nível de ${altContour}\n` : '';
-                let altBlock = `- Modelo Digital de Terreno ${altProduct}\n- ${altRes} de resolução espacial\n- Modelos entregues: ${altModel}\n${contourTxt}- Nuvem de pontos LAS\n- Arquivo TXT\n- ${altProj}\n`;
+                let contourTxt = altContour !== "N/A" ? `\n- Curvas de nível\n- ${altContour} de equidistância\n- shp, dwg e kml\n` : '';
+                let altBlock = `${altProduct}\n- Resolução espacial de ${altRes}\n- ${altModel}\n- GeoTiff 32 bit floating point\n- Nuvem de pontos .las e .txt\n${contourTxt}\n- ${altProj}\n- Sirgas 2000\n`;
 
                 if (wtCurrentType === 'alt') msg += `Seguem os dados para atender sua demanda:\n\n` + altBlock;
                 if (wtCurrentType === 'combo') msg += `Seguem os dados para atender sua demanda:\n\n` + altBlock + `\n` + imgBlocksText;
@@ -1015,12 +995,12 @@
             const obsText = document.getElementById('obs-text').value.trim();
             if (obsText) msg += `\nObservações: ${obsText}\n`;
             
-            document.getElementById('wt-output').value = msg;
+            msg += `\nAtenciosamente,\n\nLaurent MARTIN\nDiretor\nENGESAT`;
+            
+            const outWT = document.getElementById('wt-output');
+            if (outWT) outWT.value = msg;
         }
 
-        // ==========================================
-        // APP 3: FOLHA DE PROJETO
-        // ==========================================
         let fpCurrentType = 'img';
         function setFpType(type) {
             fpCurrentType = type;
@@ -1068,7 +1048,6 @@
             let finalOutput = `Serviços de Geoprocessamento `;
             let introComponents = [];
 
-            // ALTIMETRIA
             if (fpCurrentType === 'alt' || fpCurrentType === 'combo') {
                 const altProduct = document.getElementById('fp-alt-product').value;
                 const altRes = altProduct.includes('Neo') ? '5 metros' : '12 metros';
@@ -1077,13 +1056,12 @@
                 const fuso = document.getElementById('fp-alt-utm-zone').value;
                 const hemi = document.getElementById('fp-alt-utm-hemi').value;
                 
-                let altimetryPhrase = `Modelo Digital de Terreno ${altProduct} de ${altRes} de resolução espacial, contendo ${altModel}`;
+                let altimetryPhrase = `Modelo Digital de Elevação ${altProduct} de ${altRes} de resolução espacial, contendo ${altModel}`;
                 if (altContour !== "N/A") altimetryPhrase += `, curvas de nível de ${altContour}`;
                 altimetryPhrase += `, nuvem de pontos LAS e arquivo TXT, no sistema de coordenadas UTM SIRGAS 2000, fuso ${fuso}${hemi}`;
                 introComponents.push(`compostos por ${altimetryPhrase}`);
             }
 
-            // IMAGEM
             let areasData = [];
             document.querySelectorAll('#fp-areas-container .area-entry').forEach((areaEl) => {
                 let satList = [];
@@ -1128,13 +1106,11 @@
                     }
 
                     if (allSame) {
-                        // Todas áreas iguais: Cria o parágrafo global rico
                         const common = areasData[0];
                         let imgIntro = `imagens de satélite, ortorretificadas com parâmetros orbitais` + formatImageSettings(common) + `, no sistema de coordenadas UTM SIRGAS 2000, fuso ${common.zone}${common.hemi}`;
                         if (fpCurrentType === 'combo') introComponents.push(` e ${imgIntro}`);
                         else introComponents.push(`compostos por ${imgIntro}`);
                     } else {
-                        // Diferentes: Cria um parágrafo global genérico
                         if (fpCurrentType === 'combo') introComponents.push(` e imagens de satélite (detalhes de processamento e projeção por área abaixo)`);
                         else introComponents.push(`compostos por imagens de satélite (detalhes de processamento e projeção por área abaixo)`);
                     }
@@ -1145,11 +1121,9 @@
             finalOutput += `.`;
             if (delivery) finalOutput += ` ${delivery}`;
 
-            // BULLET POINTS DAS IMAGENS
+            let bulletList = "";
+
             if ((fpCurrentType === 'img' || fpCurrentType === 'combo') && areasData.length > 0) {
-                finalOutput += `\n\nConforme relação abaixo:\n`;
-                
-                // Redescobrir se todas são iguais para decidir formato da lista
                 let allSame = true;
                 if (areasData.length > 1) {
                     const first = JSON.stringify({...areasData[0], name: '', satellites: []});
@@ -1163,25 +1137,39 @@
                         let lineItem = `- `;
                         if (area.name) lineItem += `Área ${area.name}: `;
                         lineItem += `Imagem ${sat.sat} de ${sat.res} de resolução espacial, de data de ${sat.date}`;
-                        
                         if (!allSame) {
-                            // Imprime os detalhes dentro da lista se as áreas diferem
                             lineItem += `, no sistema UTM ${area.zone}${area.hemi}, ortorretificada com parâmetros orbitais` + formatImageSettings(area);
                         }
-                        finalOutput += lineItem + `.\n`;
+                        bulletList += lineItem + `.\n`;
                     });
                 });
+            }
+
+            if (fpCurrentType === 'alt' || fpCurrentType === 'combo') {
+                const altModel = document.getElementById('fp-alt-model').value;
+                const altContour = document.getElementById('fp-alt-contour').value;
+                
+                let cnText = "";
+                if (altContour === "1 m") cnText = "CN 1m";
+                else if (altContour === "2 m") cnText = "CN 2m";
+                else if (altContour === "1 m e 2 m") cnText = "CN 1m e 2m";
+
+                let altLine = `- Altimetria: ${altModel}`;
+                if (cnText !== "") altLine += ` e ${cnText}`;
+                bulletList += altLine + `\n`;
+            }
+
+            if (bulletList !== "") {
+                finalOutput += `\n\nConforme relação abaixo:\n` + bulletList;
             }
 
             const obsText = document.getElementById('fp-obs-text').value.trim();
             if (obsText) finalOutput += `\nObservações: ${obsText}`;
 
-            document.getElementById('fp-output').value = finalOutput;
+            const fpOut = document.getElementById('fp-output');
+            if (fpOut) fpOut.value = finalOutput;
         }
 
-        // ==========================================
-        // APP 4: README (MANTIDO INTACTO)
-        // ==========================================
         const folderInput = document.getElementById('folderInput');
         const btnSelectFolder = document.getElementById('btnSelectFolder');
         const loadingIndicator = document.getElementById('loadingIndicator');
@@ -1379,20 +1367,42 @@
             doc.save(fileName); btnDownloadPdf.innerHTML = originalBtnText; btnDownloadPdf.disabled = false;
         });
 
-        // ==========================================
-        // INIT GERAL
-        // ==========================================
         document.addEventListener('DOMContentLoaded', () => {
-            addArea('wt'); document.getElementById('wetransfer-form-panel').addEventListener('input', generateMessage); document.getElementById('wetransfer-form-panel').addEventListener('change', generateMessage); generateMessage();
-            addArea('fp'); document.getElementById('folha-form-panel').addEventListener('input', generateFolha); document.getElementById('folha-form-panel').addEventListener('change', generateFolha); generateFolha();
+            addArea('wt'); 
+            const wtPanel = document.getElementById('wetransfer-form-panel');
+            if (wtPanel) {
+                wtPanel.addEventListener('input', generateMessage); 
+                wtPanel.addEventListener('change', generateMessage); 
+            }
+            generateMessage();
+            
+            addArea('fp'); 
+            const fpPanel = document.getElementById('folha-form-panel');
+            if (fpPanel) {
+                fpPanel.addEventListener('input', generateFolha); 
+                fpPanel.addEventListener('change', generateFolha); 
+            }
+            generateFolha();
+            
             switchTab('tab-print-aoi');
-            const themeToggleBtn = document.getElementById('themeToggleBtn'); const themeIcon = document.getElementById('themeIcon'); const htmlElement = document.documentElement;
+            
+            const themeToggleBtn = document.getElementById('themeToggleBtn'); 
+            const themeIcon = document.getElementById('themeIcon'); 
+            const htmlElement = document.documentElement;
             if (themeToggleBtn && themeIcon) {
-                if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { htmlElement.classList.add('dark'); themeIcon.classList.replace('fa-moon', 'fa-sun'); }
+                if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { 
+                    htmlElement.classList.add('dark'); 
+                    themeIcon.classList.replace('fa-moon', 'fa-sun'); 
+                }
                 themeToggleBtn.addEventListener('click', () => {
                     htmlElement.classList.toggle('dark');
-                    if (htmlElement.classList.contains('dark')) { localStorage.setItem('theme', 'dark'); themeIcon.classList.replace('fa-moon', 'fa-sun'); } 
-                    else { localStorage.setItem('theme', 'light'); themeIcon.classList.replace('fa-sun', 'fa-moon'); }
+                    if (htmlElement.classList.contains('dark')) { 
+                        localStorage.setItem('theme', 'dark'); 
+                        themeIcon.classList.replace('fa-moon', 'fa-sun'); 
+                    } else { 
+                        localStorage.setItem('theme', 'light'); 
+                        themeIcon.classList.replace('fa-sun', 'fa-moon'); 
+                    }
                 });
             }
         });
