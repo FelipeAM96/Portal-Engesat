@@ -635,6 +635,16 @@
                             }
                         });
                     }
+                    
+                    // Exibir aviso apenas se for Satélite ou Mesclado
+                    const disclaimer = document.getElementById('legendDisclaimer');
+                    if (disclaimer) {
+                        if (e.name === "Satélite (Esri)" || e.name === "Mesclado (OSM ext. + Satélite int.)") {
+                            disclaimer.style.display = 'block';
+                        } else {
+                            disclaimer.style.display = 'none';
+                        }
+                    }
                 });
 
                 const LogoControl = L.Control.extend({
@@ -662,8 +672,15 @@
                     options: { position: 'bottomright' },
                     onAdd: function () {
                         const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control text-left');
-                        div.style.cssText = 'background-color: #ffffff; border: 2px solid #cbd5e1; border-radius: 8px; padding: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); color: #0f172a;';
-                        div.innerHTML = `<p id="legendTitle" style="font-weight: bold; font-size: 16px; margin-bottom: 6px; margin-top: 0;">Local: -</p><p id="legendArea" style="font-size: 14px; margin: 2px 0;">Área: -</p><p id="legendProj" style="font-size: 14px; margin: 2px 0;">Sistema: -</p>`;
+                        div.style.cssText = 'background-color: #ffffff; border: 2px solid #cbd5e1; border-radius: 8px; padding: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); color: #0f172a; max-width: 320px;';
+                        div.innerHTML = `
+                            <p id="legendTitle" style="font-weight: bold; font-size: 16px; margin-bottom: 6px; margin-top: 0;">Local: -</p>
+                            <p id="legendArea" style="font-size: 14px; margin: 2px 0;">Área: -</p>
+                            <p id="legendProj" style="font-size: 14px; margin: 2px 0;">Sistema: -</p>
+                            <p id="legendDisclaimer" style="font-size: 11px; margin: 8px 0 0 0; color: #64748b; line-height: 1.3; display: none; font-style: italic;">
+                                * Imagem de satélite meramente ilustrativa (mapa base genérico para demonstração da área).
+                            </p>
+                        `;
                         return div;
                     }
                 });
