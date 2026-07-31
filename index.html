@@ -623,6 +623,20 @@
                     "Mesclado (OSM ext. + Satélite int.)": mescladoLayer
                 }, null, { position: 'topleft' }).addTo(map);
 
+                // Controle para saber se o Mesclado está ativo e remover o fundo vermelho
+                map.isMescladoActive = false;
+                map.on('baselayerchange', function (e) {
+                    map.isMescladoActive = (e.name === "Mesclado (OSM ext. + Satélite int.)");
+                    if (polygonLayer) {
+                        polygonLayer.eachLayer(layer => {
+                            // Se a linha for #ff0000, significa que o polígono está selecionado
+                            if (layer.options.color === '#ff0000') {
+                                layer.setStyle({ fillOpacity: map.isMescladoActive ? 0 : 0.1 });
+                            }
+                        });
+                    }
+                });
+
                 const LogoControl = L.Control.extend({
                     options: { position: 'topleft' },
                     onAdd: function () {
@@ -669,11 +683,18 @@
             polygonsData.forEach((polyData, idx) => {
                 const latLngs = polyData.ringWGS84.map(pt => [pt.lat, pt.lon]);
                 const isSelected = idx === 0; 
-                const leafletPoly = L.polygon(latLngs, { color: isSelected ? '#ff0000' : '#f87171', weight: isSelected ? 4 : 2, fillOpacity: isSelected ? 0.1 : 0 });
+                
+                // Se for o polígono selecionado e o Mesclado não estiver ativo, põe fundo vermelho. Senão, totalmente transparente.
+                const leafletPoly = L.polygon(latLngs, { 
+                    color: isSelected ? '#ff0000' : '#f87171', 
+                    weight: isSelected ? 4 : 2, 
+                    fillOpacity: (isSelected && !map.isMescladoActive) ? 0.1 : 0 
+                });
+                
                 if (polygonsData.length > 1) {
                     leafletPoly.on('click', () => {
                         polygonLayer.eachLayer(layer => layer.setStyle({ color: '#f87171', weight: 2, fillOpacity: 0 }));
-                        leafletPoly.setStyle({ color: '#ff0000', weight: 4, fillOpacity: 0.1 });
+                        leafletPoly.setStyle({ color: '#ff0000', weight: 4, fillOpacity: map.isMescladoActive ? 0 : 0.1 });
                         updateLegend(polyData.areaKm2, polyData.projectionName, polyData.index);
                     });
                 }
