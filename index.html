@@ -557,8 +557,71 @@
             if (!map) {
                 const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: true });
                 const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, crossOrigin: true });
+                
+                // Criação da camada especial Mesclada
+                const MescladoLayer = L.GridLayer.extend({
+                    createTile: function (coords, done) {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 256; canvas.height = 256;
+                        const ctx = canvas.getContext('2d');
+                        
+                        const subdomains = ['a','b','c'];
+                        const s = subdomains[Math.abs(coords.x + coords.y) % 3];
+                        const osmUrl = `https://${s}.tile.openstreetmap.org/${coords.z}/${coords.x}/${coords.y}.png`;
+                        const satUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${coords.z}/${coords.y}/${coords.x}`;
+
+                        const imgOsm = new Image(); const imgSat = new Image();
+                        imgOsm.crossOrigin = 'Anonymous'; imgSat.crossOrigin = 'Anonymous';
+
+                        let loaded = 0;
+                        const draw = () => {
+                            loaded++;
+                            if (loaded === 2) {
+                                // 1. Desenha o fundo completo de OSM
+                                ctx.drawImage(imgOsm, 0, 0, 256, 256);
+                                
+                                const currentData = map && map.currentPolygons ? map.currentPolygons : null;
+                                if (currentData && currentData.length > 0 && map) {
+                                    // 2. Cria a máscara/recorte (Clip Path) com base nos polígonos
+                                    ctx.beginPath();
+                                    const nwPixel = new L.Point(coords.x * 256, coords.y * 256);
+                                    currentData.forEach(poly => {
+                                        if (!poly.ringWGS84 || poly.ringWGS84.length === 0) return;
+                                        const firstP = map.project([poly.ringWGS84[0].lat, poly.ringWGS84[0].lon], coords.z);
+                                        ctx.moveTo(firstP.x - nwPixel.x, firstP.y - nwPixel.y);
+                                        for (let i = 1; i < poly.ringWGS84.length; i++) {
+                                            const p = map.project([poly.ringWGS84[i].lat, poly.ringWGS84[i].lon], coords.z);
+                                            ctx.lineTo(p.x - nwPixel.x, p.y - nwPixel.y);
+                                        }
+                                        ctx.closePath();
+                                    });
+                                    ctx.save();
+                                    ctx.clip(); // Aplica a máscara geométrica
+                                    
+                                    // 3. Desenha o Satélite APENAS dentro da máscara
+                                    ctx.drawImage(imgSat, 0, 0, 256, 256);
+                                    ctx.restore();
+                                }
+                                done(null, canvas);
+                            }
+                        };
+                        
+                        imgOsm.onload = draw; imgSat.onload = draw;
+                        imgOsm.onerror = () => { loaded++; if(loaded===2) done(null, canvas); };
+                        imgSat.onerror = () => { loaded++; if(loaded===2) done(null, canvas); };
+                        
+                        imgOsm.src = osmUrl; imgSat.src = satUrl;
+                        return canvas;
+                    }
+                });
+                const mescladoLayer = new MescladoLayer({ maxZoom: 19 });
+
                 map = L.map('map', { zoomControl: true, attributionControl: false, preferCanvas: true, layers: [osmLayer] });
-                L.control.layers({ "Mapa Base (OSM)": osmLayer, "Satélite (Esri)": satLayer }, null, { position: 'topleft' }).addTo(map);
+                L.control.layers({ 
+                    "Mapa Base (OSM)": osmLayer, 
+                    "Satélite (Esri)": satLayer,
+                    "Mesclado (OSM ext. + Satélite int.)": mescladoLayer
+                }, null, { position: 'topleft' }).addTo(map);
 
                 const LogoControl = L.Control.extend({
                     options: { position: 'topleft' },
@@ -592,6 +655,13 @@
                 });
                 map.addControl(new LegendControl());
             }
+            
+            // Atualiza os dados dinâmicos do polígono e força o redesenho (útil caso faça o envio de um novo KML com o Mesclado já ativo)
+            map.currentPolygons = polygonsData;
+            map.eachLayer(layer => {
+                if (layer.redraw) layer.redraw();
+            });
+
             map.invalidateSize();
             if (polygonLayer) map.removeLayer(polygonLayer);
             polygonLayer = L.featureGroup().addTo(map);
