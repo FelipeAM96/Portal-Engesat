@@ -985,15 +985,21 @@
                 let contourTxt = altContour !== "N/A" ? `\n- Curvas de nível\n- ${altContour} de equidistância\n- shp, dwg e kml\n` : '';
                 let altBlock = `${altProduct}\n- Resolução espacial de ${altRes}\n- ${altModel}\n- GeoTiff 32 bit floating point\n- Nuvem de pontos .las e .txt\n${contourTxt}\n- ${altProj}\n- Sirgas 2000\n`;
 
-                if (wtCurrentType === 'alt') msg += `Seguem os dados para atender sua demanda:\n\n` + altBlock;
-                if (wtCurrentType === 'combo') msg += `Seguem os dados para atender sua demanda:\n\n` + altBlock + `\n` + imgBlocksText;
+                if (wtCurrentType === 'alt') {
+                    msg += `Seguem os dados para atender sua demanda:\n\n` + altBlock;
+                } else if (wtCurrentType === 'combo') {
+                    msg += `Seguem os dados para atender sua demanda:\n\n` + altBlock + `\n` + imgBlocksText;
+                }
             } else if (wtCurrentType === 'img') {
                 msg += `Seguem pelo presente os arquivos digitais relativos ao fornecimento de:\n\n` + imgBlocksText;
             }
 
-            msg += `\npara atender o seu pedido.\n`;
             const obsText = document.getElementById('obs-text').value.trim();
-            if (obsText) msg += `\nObservações: ${obsText}\n`;
+            if (obsText) {
+                msg += `Observações: ${obsText}\n\n`;
+            }
+
+            msg += `para atender o seu pedido.\n`;
             
             msg += `\nAtenciosamente,\n\nLaurent MARTIN\nDiretor\nENGESAT`;
             
@@ -1136,7 +1142,10 @@
                     area.satellites.forEach(sat => {
                         let lineItem = `- `;
                         if (area.name) lineItem += `Área ${area.name}: `;
-                        lineItem += `Imagem ${sat.sat} de ${sat.res} de resolução espacial, de data de ${sat.date}`;
+                        
+                        // Formato de texto limpo sem "de resolução espacial" e "de data de"
+                        lineItem += `Imagem ${sat.sat} de ${sat.res}, ${sat.date}`;
+                        
                         if (!allSame) {
                             lineItem += `, no sistema UTM ${area.zone}${area.hemi}, ortorretificada com parâmetros orbitais` + formatImageSettings(area);
                         }
