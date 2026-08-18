@@ -22,9 +22,15 @@
     <!-- html2canvas (Print AOI) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <!-- FontAwesome & jsPDF (README) -->
+    <!-- FontAwesome & jsPDF (README & Validador) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- html2pdf.js (Validador) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- geotiff.js (Validador) -->
+    <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
 
     <style>
         body {
@@ -65,11 +71,11 @@
         html.dark body { background-color: #1e293b; color: #f8fafc; }
         html.dark .bg-white { background-color: #334155 !important; border-color: #475569 !important; }
         html.dark .bg-slate-50, html.dark .bg-gray-100 { background-color: #1e293b !important; border-color: #475569 !important; }
-        html.dark .bg-slate-200 { background-color: #475569 !important; }
-        html.dark .text-slate-800, html.dark .text-slate-900, html.dark .text-gray-800 { color: #ffffff !important; }
+        html.dark .bg-slate-200 { background-color: #475569 !important; border-color: #64748b !important;}
+        html.dark .text-slate-800, html.dark .text-slate-900, html.dark .text-gray-800, html.dark .text-gray-900 { color: #ffffff !important; }
         html.dark .text-slate-700 { color: #f1f5f9 !important; }
         html.dark .text-slate-600, html.dark .text-gray-500, html.dark .text-slate-500 { color: #cbd5e1 !important; }
-        html.dark .border-slate-200, html.dark .border-slate-300, html.dark .border-gray-200 { border-color: #475569 !important; }
+        html.dark .border-slate-200, html.dark .border-slate-300, html.dark .border-gray-200, html.dark .border-gray-100, html.dark .border-slate-100 { border-color: #475569 !important; }
         html.dark input, html.dark select, html.dark textarea { background-color: #1e293b !important; color: #ffffff !important; border-color: #64748b !important; }
         html.dark input:focus, html.dark select:focus, html.dark textarea:focus { border-color: #60a5fa !important; box-shadow: 0 0 0 1px #60a5fa !important; }
         html.dark .tab-btn:hover { color: #f1f5f9 !important; border-color: #64748b !important; }
@@ -80,13 +86,24 @@
         html.dark #copyModal .bg-slate-200 { background-color: #334155 !important; }
         html.dark header.border-blue-600 { border-color: #3b82f6 !important; }
         html.dark .hover\:bg-slate-100:hover, html.dark .hover\:bg-blue-100:hover { background-color: #475569 !important; }
-        html.dark .bg-blue-50 { background-color: rgba(59, 130, 246, 0.15) !important; }
+        html.dark .bg-blue-50 { background-color: rgba(59, 130, 246, 0.15) !important; border-color: rgba(59, 130, 246, 0.2) !important;}
+        html.dark .bg-green-50 { background-color: rgba(34, 197, 94, 0.1) !important; border-color: rgba(34, 197, 94, 0.2) !important; }
+        html.dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.2) !important; }
         html.dark #map { background-color: #f8f9fa !important; color: #333 !important; }
+        
+        /* Validador Status Colors */
+        html.dark .status-match { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+        html.dark .status-error { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
+        html.dark .status-manual { background-color: rgba(148, 163, 184, 0.2); color: #cbd5e1; border-color: rgba(148, 163, 184, 0.3); }
+        
+        .break-words { word-break: break-all; overflow-wrap: break-word; }
+        html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #475569 !important; }
+        html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #475569 !important; }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col transition-colors duration-300">
 
-    <div class="bg-white shadow-md z-50 sticky top-0">
+    <div class="bg-white shadow-md z-50 sticky top-0 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16 border-b border-gray-200">
                 <div class="flex-shrink-0 flex items-center gap-3">
@@ -106,10 +123,13 @@
                     <button onclick="switchTab('tab-readme')" id="btn-tab-readme" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i class="fas fa-file-signature mr-2"></i>README
                     </button>
+                    <button onclick="switchTab('tab-validador')" id="btn-tab-validador" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-satellite mr-2"></i>Validador Geo
+                    </button>
                     
                     <div class="border-l border-gray-300 h-6 mx-2 hidden sm:block"></div>
                     
-                    <button id="themeToggleBtn" class="text-slate-500 hover:text-blue-600 transition-colors p-2" title="Alternar Modo Noturno">
+                    <button id="themeToggleBtn" class="text-slate-500 hover:text-blue-600 transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" title="Alternar Modo Noturno">
                         <i class="fas fa-moon text-xl" id="themeIcon"></i>
                     </button>
                 </div>
@@ -117,8 +137,9 @@
         </div>
     </div>
 
-    <main class="flex-grow p-4 sm:p-8">
+    <main class="flex-grow p-4 sm:p-8 w-full">
 
+        <!-- ABA: PRINT AOI -->
         <div id="tab-print-aoi" class="tab-content active max-w-5xl mx-auto w-full">
             <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div class="bg-blue-600 p-6 text-white text-center">
@@ -175,6 +196,7 @@
             </div>
         </div>
 
+        <!-- ABA: WETRANSFER -->
         <div id="tab-wetransfer" class="tab-content max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex-col md:flex-row border border-slate-200">
             <div id="wetransfer-form-panel" class="w-full md:w-5/12 bg-slate-50 p-6 sm:p-8 border-r border-slate-200 flex flex-col gap-6 overflow-y-auto" style="max-height: 85vh;">
                 <div>
@@ -267,6 +289,7 @@
             </div>
         </div>
 
+        <!-- ABA: FOLHA DE PROJETO -->
         <div id="tab-folha" class="tab-content max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex-col md:flex-row border border-slate-200">
             <div id="folha-form-panel" class="w-full md:w-5/12 bg-slate-50 p-6 sm:p-8 border-r border-slate-200 flex flex-col gap-6 overflow-y-auto" style="max-height: 85vh;">
                 <div>
@@ -366,6 +389,7 @@
             </div>
         </div>
 
+        <!-- ABA: README -->
         <div id="tab-readme" class="tab-content max-w-4xl mx-auto w-full">
             <header class="bg-white rounded-xl shadow-sm p-6 mb-6 border-t-4 border-blue-600">
                 <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
@@ -406,6 +430,94 @@
                     </div>
                     <div id="saveStatus" class="hidden mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-center font-medium shadow-sm transition-opacity"></div>
                     <textarea id="previewText" class="w-full h-96 p-4 border border-slate-300 rounded-lg bg-slate-50 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y" spellcheck="false"></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ABA: VALIDADOR GEO -->
+        <div id="tab-validador" class="tab-content max-w-7xl mx-auto w-full">
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8 border border-slate-200" id="validadorUploadSection">
+                <div class="bg-blue-600 p-6 text-white text-center">
+                    <h1 class="text-3xl font-bold flex justify-center items-center gap-3">
+                        <i class="fas fa-satellite"></i> Validação de Metadados
+                    </h1>
+                    <p class="text-blue-100 mt-2 text-sm md:text-base max-w-2xl mx-auto">
+                        Verifique projeções, datum e consistência de nomenclaturas de arquivos TIFF, SHP, DWG, KML, ECW e outros.
+                    </p>
+                </div>
+                
+                <div class="p-8 text-center">
+                    <div class="mb-2 flex flex-col items-center">
+                        <div onclick="openValidadorFolderPicker()" class="cursor-pointer border-2 border-dashed border-blue-400 bg-blue-50 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors w-full max-w-2xl p-10 rounded-xl text-center flex flex-col items-center justify-center group">
+                            <i class="fas fa-folder-open text-5xl text-blue-500 mb-4 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xl font-semibold text-blue-700 dark:text-blue-400 block mb-2">Clique para selecionar a Pasta Mãe</span>
+                            <span class="text-sm text-blue-500 dark:text-blue-300 block">O sistema buscará e validará automaticamente os arquivos apenas dentro de pastas "Dados Processados".</span>
+                            <input type="file" id="validadorFolderInput" webkitdirectory directory multiple class="hidden">
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-500 mt-4"><i class="fas fa-shield-alt text-green-500"></i> Processamento 100% local. Rápido e Seguro.</p>
+                </div>
+            </div>
+
+            <div id="validadorLoadingStatus" class="hidden bg-white border border-blue-200 rounded-xl p-6 mb-8 flex-col items-center justify-center shadow-md">
+                <div class="spinner mb-4"></div>
+                <div class="text-blue-800 dark:text-blue-400 font-bold text-lg">Processando arquivos...</div>
+                <div class="text-slate-500 mt-1" id="validadorFileCount">Iniciando leitura...</div>
+            </div>
+
+            <div id="validadorResultsContainer" class="hidden flex-col gap-6">
+                
+                <div class="flex justify-between items-end">
+                    <h2 class="text-2xl font-bold text-slate-800"><i class="fas fa-chart-pie text-blue-500 mr-2"></i> Resultados da Análise</h2>
+                    <button id="btnValidadorPdf" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-bold transition-transform transform hover:-translate-y-0.5 shadow-lg flex items-center gap-2">
+                        <i class="fas fa-file-pdf"></i> Baixar Relatório PDF
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="validadorSummaryCards">
+                    <div class="bg-white p-5 rounded-xl border-l-4 border-blue-500 shadow-sm flex flex-col justify-center items-center text-center transition-colors">
+                        <div class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">Analisados</div>
+                        <div class="text-4xl font-black text-slate-800" id="validadorTotalFiles">0</div>
+                    </div>
+                    <div class="bg-green-50 p-5 rounded-xl border-l-4 border-green-500 shadow-sm flex flex-col justify-center items-center text-center transition-colors">
+                        <div class="text-sm text-green-700 font-bold uppercase tracking-wider mb-1">Corretos (Match)</div>
+                        <div class="text-4xl font-black text-green-700" id="validadorMatchFiles">0</div>
+                    </div>
+                    <div class="bg-red-50 p-5 rounded-xl border-l-4 border-red-500 shadow-sm flex flex-col justify-center items-center text-center transition-colors">
+                        <div class="text-sm text-red-700 font-bold uppercase tracking-wider mb-1">Inconsistentes</div>
+                        <div class="text-4xl font-black text-red-700" id="validadorErrorFiles">0</div>
+                    </div>
+                    <div class="bg-slate-50 p-5 rounded-xl border-l-4 border-slate-500 shadow-sm flex flex-col justify-center items-center text-center transition-colors">
+                        <div class="text-sm text-slate-600 font-bold uppercase tracking-wider mb-1">Verificação Manual</div>
+                        <div class="text-4xl font-black text-slate-700" id="validadorManualFiles">0</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden transition-colors duration-300">
+                    <div class="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800"><i class="fas fa-list text-slate-400 mr-2"></i> Detalhamento dos Arquivos (Agrupados por Pasta)</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap" id="validadorResultsTable">
+                            <thead class="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-5 py-4 w-32 text-center">Status</th>
+                                    <th class="px-5 py-4">Arquivo</th>
+                                    <th class="px-5 py-4 w-64">CRS Esperado (Nome)</th>
+                                    <th class="px-5 py-4 w-64">CRS Lido (Metadado)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white" id="validadorTableBody">
+                                <!-- Resultados injetados via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center mt-4">
+                    <button id="btnValidadorNewFolder" onclick="openValidadorFolderPicker()" class="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 transition-colors">
+                        <i class="fas fa-redo-alt"></i> Analisar Nova Pasta
+                    </button>
                 </div>
             </div>
         </div>
@@ -558,7 +670,6 @@
                 const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: true });
                 const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, crossOrigin: true });
                 
-                // Criação da camada especial Mesclada
                 const MescladoLayer = L.GridLayer.extend({
                     createTile: function (coords, done) {
                         const canvas = document.createElement('canvas');
@@ -577,12 +688,9 @@
                         const draw = () => {
                             loaded++;
                             if (loaded === 2) {
-                                // 1. Desenha o fundo completo de OSM
                                 ctx.drawImage(imgOsm, 0, 0, 256, 256);
-                                
                                 const currentData = map && map.currentPolygons ? map.currentPolygons : null;
                                 if (currentData && currentData.length > 0 && map) {
-                                    // 2. Cria a máscara/recorte (Clip Path) com base nos polígonos
                                     ctx.beginPath();
                                     const nwPixel = new L.Point(coords.x * 256, coords.y * 256);
                                     currentData.forEach(poly => {
@@ -596,9 +704,7 @@
                                         ctx.closePath();
                                     });
                                     ctx.save();
-                                    ctx.clip(); // Aplica a máscara geométrica
-                                    
-                                    // 3. Desenha o Satélite APENAS dentro da máscara
+                                    ctx.clip(); 
                                     ctx.drawImage(imgSat, 0, 0, 256, 256);
                                     ctx.restore();
                                 }
@@ -623,20 +729,16 @@
                     "Mesclado (OSM ext. + Satélite int.)": mescladoLayer
                 }, null, { position: 'topleft' }).addTo(map);
 
-                // Controle para saber se o Mesclado está ativo e remover o fundo vermelho
                 map.isMescladoActive = false;
                 map.on('baselayerchange', function (e) {
                     map.isMescladoActive = (e.name === "Mesclado (OSM ext. + Satélite int.)");
                     if (polygonLayer) {
                         polygonLayer.eachLayer(layer => {
-                            // Se a linha for #ff0000, significa que o polígono está selecionado
                             if (layer.options.color === '#ff0000') {
                                 layer.setStyle({ fillOpacity: map.isMescladoActive ? 0 : 0.1 });
                             }
                         });
                     }
-                    
-                    // Exibir aviso apenas se for Satélite ou Mesclado
                     const disclaimer = document.getElementById('legendDisclaimer');
                     if (disclaimer) {
                         if (e.name === "Satélite (Esri)" || e.name === "Mesclado (OSM ext. + Satélite int.)") {
@@ -687,7 +789,6 @@
                 map.addControl(new LegendControl());
             }
             
-            // Atualiza os dados dinâmicos do polígono e força o redesenho (útil caso faça o envio de um novo KML com o Mesclado já ativo)
             map.currentPolygons = polygonsData;
             map.eachLayer(layer => {
                 if (layer.redraw) layer.redraw();
@@ -701,7 +802,6 @@
                 const latLngs = polyData.ringWGS84.map(pt => [pt.lat, pt.lon]);
                 const isSelected = idx === 0; 
                 
-                // Se for o polígono selecionado e o Mesclado não estiver ativo, põe fundo vermelho. Senão, totalmente transparente.
                 const leafletPoly = L.polygon(latLngs, { 
                     color: isSelected ? '#ff0000' : '#f87171', 
                     weight: isSelected ? 4 : 2, 
@@ -797,13 +897,11 @@
             let html = ''; for (let sat in satelliteData) { html += `<option value="${sat}">${sat}</option>`; } return html;
         }
 
-        // Logic to dynamically add Areas inside WeTransfer and Folha de Projeto
         function addArea(app) {
             const containerId = app === 'wt' ? 'wt-areas-container' : 'fp-areas-container';
             const container = document.getElementById(containerId);
-            if (!container) return; // safety check
+            if (!container) return; 
             
-            // Default Values or Copy from last area
             let lastZone = app === 'wt' ? "23" : "22", lastHemi = "S";
             let lastProc = "Modo PSM", lastBits = "8", lastBandas = app === 'wt' ? "3 e 4" : "4";
             let lastCor = true, lastFalsa = false, lastCont = true;
@@ -848,7 +946,6 @@
                     Adicionar satélite nesta área
                 </button>
 
-                <!-- Configurações específicas desta Área -->
                 <div class="area-settings bg-white p-4 rounded-lg border border-slate-200 mt-2 shadow-sm">
                     <h5 class="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3">Configurações Desta Área</h5>
                     
@@ -1251,7 +1348,6 @@
                         let lineItem = `- `;
                         if (area.name) lineItem += `Área ${area.name}: `;
                         
-                        // Formato de texto limpo sem "de resolução espacial" e "de data de"
                         lineItem += `Imagem ${sat.sat} de ${sat.res}, ${sat.date}`;
                         
                         if (!allSame) {
@@ -1295,15 +1391,16 @@
         const btnDownloadTxt = document.getElementById('btnDownloadTxt');
         const btnDownloadPdf = document.getElementById('btnDownloadPdf');
 
-        let generatedText = "", projectName = "Projeto", rootDirHandle = null; 
+        let generatedText = "", readmeProjectName = "Projeto", readmeRootDirHandle = null; 
 
         btnSelectFolder.addEventListener('click', async () => {
             if (window.showDirectoryPicker) {
                 try {
-                    rootDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' }); projectName = rootDirHandle.name;
+                    readmeRootDirHandle = await window.showDirectoryPicker({ mode: 'readwrite' }); 
+                    readmeProjectName = readmeRootDirHandle.name;
                     btnSelectFolder.classList.add('hidden'); loadingIndicator.classList.remove('hidden'); loadingIndicator.classList.add('flex'); resultArea.classList.add('hidden');
-                    const files = []; await readDirectory(rootDirHandle, projectName, files); setTimeout(() => processFiles(files), 100);
-                } catch (err) { if (err.name !== 'AbortError') { rootDirHandle = null; folderInput.click(); } }
+                    const files = []; await readDirectory(readmeRootDirHandle, readmeProjectName, files); setTimeout(() => processFiles(files), 100);
+                } catch (err) { if (err.name !== 'AbortError') { readmeRootDirHandle = null; folderInput.click(); } }
             } else folderInput.click();
         });
 
@@ -1315,8 +1412,8 @@
         }
 
         folderInput.addEventListener('change', async (event) => {
-            const files = event.target.files; if (files.length === 0) return; rootDirHandle = null; 
-            projectName = files[0].webkitRelativePath.split('/')[0] || "Projeto";
+            const files = event.target.files; if (files.length === 0) return; readmeRootDirHandle = null; 
+            readmeProjectName = files[0].webkitRelativePath.split('/')[0] || "Projeto";
             btnSelectFolder.classList.add('hidden'); loadingIndicator.classList.remove('hidden'); loadingIndicator.classList.add('flex'); resultArea.classList.add('hidden');
             setTimeout(() => processFiles(files), 100);
         });
@@ -1441,10 +1538,10 @@
         }
 
         btnDownloadTxt.addEventListener('click', async () => {
-            if (!generatedText) return; const fileName = `README - Instruções - ${projectName}.txt`;
-            if (rootDirHandle) {
+            if (!generatedText) return; const fileName = `README - Instruções - ${readmeProjectName}.txt`;
+            if (readmeRootDirHandle) {
                 try {
-                    const fileHandle = await rootDirHandle.getFileHandle(fileName, { create: true }); const writable = await fileHandle.createWritable();
+                    const fileHandle = await readmeRootDirHandle.getFileHandle(fileName, { create: true }); const writable = await fileHandle.createWritable();
                     await writable.write(generatedText); await writable.close(); showSaveSuccess(`<i class="fas fa-check-circle"></i> Arquivo TXT salvo direto na pasta!`); return;
                 } catch (e) { alert("Bloqueado. Salvando em Downloads."); }
             }
@@ -1473,15 +1570,367 @@
                 for (let j = 0; j < textLines.length; j++) { checkPageBreak(lineSpacing); if (isTitle) doc.text(textLines[j], (pageWidth - doc.getTextWidth(textLines[j])) / 2, cursorY); else doc.text(textLines[j], marginX + indent, cursorY); cursorY += lineSpacing; }
                 if (drawLineBelow) { cursorY += 2; doc.setDrawColor(37, 99, 235); doc.setLineWidth(0.5); doc.line(marginX, cursorY, pageWidth - marginX, cursorY); cursorY += 4; }
             }
-            const fileName = `README - Instruções - ${projectName}.pdf`;
-            if (rootDirHandle) {
+            const fileName = `README - Instruções - ${readmeProjectName}.pdf`;
+            if (readmeRootDirHandle) {
                 try {
-                    const pdfBlob = doc.output('blob'); const fileHandle = await rootDirHandle.getFileHandle(fileName, { create: true });
+                    const pdfBlob = doc.output('blob'); const fileHandle = await readmeRootDirHandle.getFileHandle(fileName, { create: true });
                     const writable = await fileHandle.createWritable(); await writable.write(pdfBlob); await writable.close();
                     showSaveSuccess(`<i class="fas fa-check-circle"></i> PDF salvo direto na pasta!`); btnDownloadPdf.innerHTML = originalBtnText; btnDownloadPdf.disabled = false; return;
                 } catch (e) { alert("Bloqueado. Salvando em Downloads."); }
             }
             doc.save(fileName); btnDownloadPdf.innerHTML = originalBtnText; btnDownloadPdf.disabled = false;
+        });
+
+        const validadorValidKeywords = [
+            "SPOT 1", "SPOT 2", "SPOT 3", "SPOT 4", "SPOT 5", "SPOT 6", "SPOT1", "SPOT2", "SPOT3", "SPOT4", "SPOT5", "SPOT6",
+            "PLEIADES", "PLEIADES NEO", "PLEIADES NEO HD 15", "JILIN", "EROS B", "EROSB",
+            "WORLDVIEW", "WORLDVIEW 1", "WORLDVIEW 2", "WORLDVIEW 3", "WORLDVIEW 4", "WV", "WV1", "WV2", "WV3", "WV4",
+            "LEGION", "LEGION HD 15", "KOMPSAT 2", "KOMPSAT 3", "KOMPSAT 3A", "KOMPSAT", "KOMPSAT2", "KOMPSAT3", "KOMPSAT3A",
+            "BEIJIN", "BEIJIN 3A", "BEIJIN 3N3", "BEIJIN3A", "BEIJIN3N3",
+            "GEOEYE", "QUICKBIRD", "PLANET", "TRIPLESAT", "SUPERVIEW", "SKYSAT", "RAPIDEYE",
+            "GAOFEN 2", "GAOFEN", "GAOFEN2", "IKONOS", "BLACKSKY",
+            "LANDSAT 4", "LANDSAT 5", "LANDSAT 7", "LANDSAT 8", "LANDSAT4", "LANDSAT5", "LANDSAT7", "LANDSAT8",
+            "SENTINEL 2", "SENTINEL2", "WORLDDEM", "WORLDDEM NEO", "WORLDDEMNEO", "AW3D", "SRTM"
+        ];
+        const validadorValidExtensions = ['.tif', '.geotiff', '.shp', '.dwg', '.kml', '.kmz', '.ecw', '.pdf'];
+
+        let validadorFileStats = { total: 0, match: 0, error: 0, manual: 0 };
+        let validadorFileIndex = {}; 
+        let validadorRootDir = null;
+        let validadorProject = "Projeto";
+
+        async function openValidadorFolderPicker() {
+            if (window.showDirectoryPicker) {
+                try {
+                    validadorRootDir = await window.showDirectoryPicker({ mode: 'readwrite' });
+                    validadorProject = validadorRootDir.name;
+                    document.getElementById('validadorResultsContainer').classList.add('hidden');
+                    document.getElementById('validadorUploadSection').classList.add('hidden');
+                    document.getElementById('validadorLoadingStatus').classList.remove('hidden');
+                    document.getElementById('validadorLoadingStatus').classList.add('flex');
+                    
+                    let files = [];
+                    await readValidadorDirectory(validadorRootDir, validadorProject, files);
+                    processValidadorSelectedFiles(files);
+                } catch (err) {
+                    if (err.name !== 'AbortError') document.getElementById('validadorFolderInput').click();
+                }
+            } else {
+                document.getElementById('validadorFolderInput').click();
+            }
+        }
+
+        async function readValidadorDirectory(dirHandle, path, filesList) {
+            for await (const entry of dirHandle.values()) {
+                if (entry.kind === 'file') {
+                    const file = await entry.getFile();
+                    Object.defineProperty(file, 'webkitRelativePath', { value: path + '/' + entry.name, writable: false });
+                    filesList.push(file);
+                } else if (entry.kind === 'directory') {
+                    await readValidadorDirectory(entry, path + '/' + entry.name, filesList);
+                }
+            }
+        }
+
+        function handleValidadorFilesFallback(event) {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+            validadorRootDir = null; 
+            validadorProject = files[0].webkitRelativePath.split('/')[0] || "Projeto";
+            processValidadorSelectedFiles(files);
+        }
+        
+        document.getElementById('validadorFolderInput').addEventListener('change', handleValidadorFilesFallback);
+
+        async function processValidadorSelectedFiles(files) {
+            if (files.length === 0) {
+                document.getElementById('validadorLoadingStatus').classList.add('hidden');
+                document.getElementById('validadorUploadSection').classList.remove('hidden');
+                return;
+            }
+
+            validadorFileStats = { total: 0, match: 0, error: 0, manual: 0 };
+            document.getElementById('validadorTableBody').innerHTML = '';
+            document.getElementById('validadorResultsContainer').classList.add('hidden');
+            document.getElementById('validadorUploadSection').classList.add('hidden');
+            document.getElementById('validadorLoadingStatus').classList.remove('hidden');
+            document.getElementById('validadorLoadingStatus').classList.add('flex');
+            
+            validadorFileIndex = {};
+            let filesToProcess = [];
+            let analysisResults = []; 
+
+            for (let i = 0; i < files.length; i++) {
+                let file = files[i];
+                let nameUpper = file.name.toUpperCase();
+                validadorFileIndex[file.webkitRelativePath] = file;
+
+                let normPath = file.webkitRelativePath.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[-_]/g, ' ');
+                if (!normPath.includes("dados processados")) continue; 
+
+                let ext = getValidadorExtension(nameUpper).toLowerCase();
+                if (!validadorValidExtensions.includes(ext)) continue;
+
+                let cleanName = nameUpper.replace(/[-_]/g, ' ');
+                let hasValidKeyword = validadorValidKeywords.some(keyword => cleanName.includes(keyword));
+                if (hasValidKeyword) filesToProcess.push(file);
+            }
+
+            for (let i = 0; i < filesToProcess.length; i++) {
+                let file = filesToProcess[i];
+                let ext = getValidadorExtension(file.name).toLowerCase();
+                let nameOnly = file.name.substring(0, file.name.lastIndexOf('.'));
+                
+                document.getElementById('validadorFileCount').textContent = `Processando arquivo ${i+1} de ${filesToProcess.length}...`;
+
+                let expectedCRS = parseExpectedCRS(nameOnly);
+                let actualCRS = "Lendo...";
+                let statusType = 'error';
+
+                try {
+                    if (ext === '.tif' || ext === '.geotiff') {
+                        actualCRS = await parseGeoTiffMetadata(file);
+                        statusType = compareCRS(expectedCRS, actualCRS, ext);
+                    } 
+                    else if (ext === '.shp' || ext === '.dwg') {
+                        actualCRS = await parsePrjMetadata(file, validadorFileIndex, ext);
+                        if (ext === '.dwg' && actualCRS.includes('⚠️')) statusType = 'unsupported';
+                        else statusType = compareCRS(expectedCRS, actualCRS, ext);
+                    }
+                    else if (ext === '.kml' || ext === '.kmz') {
+                        actualCRS = 'WGS 84 (Padrão KML/KMZ EPSG:4326)';
+                        if (expectedCRS === "Não especificado no nome") { expectedCRS = "Implícito pelo formato (WGS 84)"; statusType = 'match'; } 
+                        else statusType = compareCRS(expectedCRS, actualCRS, ext);
+                    }
+                    else if (['.ecw', '.pdf'].includes(ext)) {
+                        actualCRS = '⚠️ Formato requer leitura em software desktop (QGIS/CAD/etc).';
+                        statusType = 'unsupported';
+                    }
+                } catch (error) { actualCRS = "❌ Tags CRS desconhecidas"; statusType = 'error'; }
+
+                validadorFileStats.total++;
+                if(statusType === 'match') validadorFileStats.match++;
+                else if(statusType === 'error') validadorFileStats.error++;
+                else if(statusType === 'unsupported') validadorFileStats.manual++;
+
+                analysisResults.push({
+                    file: file, path: file.webkitRelativePath, dirname: getValidadorDirName(file.webkitRelativePath),
+                    filename: file.name, expected: expectedCRS, actual: actualCRS, status: statusType
+                });
+            }
+
+            renderValidadorResults(analysisResults);
+            document.getElementById('validadorLoadingStatus').classList.add('hidden');
+            document.getElementById('validadorLoadingStatus').classList.remove('flex');
+            document.getElementById('validadorResultsContainer').classList.remove('hidden');
+            document.getElementById('validadorResultsContainer').classList.add('flex');
+            updateValidadorDashboard();
+        }
+
+        function getValidadorDirName(path) {
+            let parts = path.split('/'); parts.pop(); 
+            return parts.join('/') || '/';
+        }
+
+        function parseExpectedCRS(filename) {
+            let nameUpper = filename.toUpperCase().replace(/[-_]/g, ' ');
+            let expected = "";
+            if (nameUpper.includes("SIRGAS") || nameUpper.includes("SIRGAS2000") || nameUpper.includes("SIRGAS 2000")) expected = "SIRGAS 2000";
+            else if (nameUpper.includes("WGS84") || nameUpper.includes("WGS 84")) expected = "WGS 84";
+            else if (nameUpper.includes("SAD69") || nameUpper.includes("SAD 69")) expected = "SAD 69";
+
+            let isGeo = /\bGEO\b/.test(nameUpper) || nameUpper.includes("GEOGRAFICA") || nameUpper.includes("GEOGRÁFICA");
+            let fusoMatch = nameUpper.match(/(?:UTM|FUSO|ZONA)?[\s]*(\d{1,2})[\s]*([SN])\b/i);
+            if (!fusoMatch) fusoMatch = nameUpper.match(/(?:UTM|FUSO|ZONA)[\s]*(\d{1,2})\b/i);
+            
+            if (isGeo) expected += expected ? " (Geográfico)" : "Geográfico";
+            else if (fusoMatch) {
+                let z = fusoMatch[1]; let h = fusoMatch[2] ? fusoMatch[2].toUpperCase() : 'S'; 
+                expected += expected ? ` / UTM zone ${z}${h}` : `UTM zone ${z}${h}`;
+            } else if(!expected) expected = "Não especificado no nome";
+
+            return expected.trim();
+        }
+
+        async function parsePrjMetadata(file, fileIndex, ext) {
+            const basePath = file.webkitRelativePath.substring(0, file.webkitRelativePath.lastIndexOf('.'));
+            const prjFile = fileIndex[basePath + '.prj'] || fileIndex[basePath + '.PRJ'];
+
+            if (!prjFile) {
+                if (ext === '.shp') return "❌ Arquivo .prj ausente (necessário para SHP).";
+                if (ext === '.dwg') return "⚠️ Formato DWG requer arquivo .prj associado para leitura automática no navegador.";
+                return "❌ Arquivo .prj ausente.";
+            }
+
+            const text = await prjFile.text();
+            let extracao = "";
+            if(text.includes("SIRGAS_2000") || text.includes("SIRGAS 2000")) extracao += "SIRGAS 2000";
+            else if(text.includes("WGS_1984") || text.includes("WGS 84") || text.includes("WGS84")) extracao += "WGS 84";
+            else if(text.includes("SAD_1969") || text.includes("SAD 69")) extracao += "SAD 69";
+            
+            const utmMatch = text.match(/UTM[\s_]*zone[\s_]*(\d{1,2})[\s_]*([SN]?)/i);
+            if(utmMatch) {
+                let h = utmMatch[2] ? utmMatch[2].toUpperCase() : 'S';
+                extracao += ` / UTM zone ${utmMatch[1]}${h}`;
+            } else if (text.includes("GEOGCS") || text.includes("GEOGCRS")) extracao += " (Geográfico)";
+
+            if(extracao.trim() === "") return "Formato PRJ não reconhecido (" + text.substring(0,30) + "...)";
+            return extracao.trim();
+        }
+
+        async function parseGeoTiffMetadata(file) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer);
+                const image = await tiff.getImage();
+                const geoKeys = image.getGeoKeys();
+
+                if (!geoKeys) return "Sem metadados espaciais (GeoKeys)";
+
+                let result = "";
+                let epsg = geoKeys.ProjectedCSTypeGeoKey || geoKeys.GeographicTypeGeoKey;
+
+                if (epsg) {
+                    if (epsg === 4326) result = "WGS 84 (Geográfico) (EPSG:4326)";
+                    else if (epsg === 4674) result = "SIRGAS 2000 (Geográfico) (EPSG:4674)";
+                    else if (epsg === 4291) result = "SAD 69 (Geográfico) (EPSG:4291)";
+                    else if (epsg >= 32701 && epsg <= 32760) result = `WGS 84 / UTM zone ${epsg - 32700}S (EPSG:${epsg})`;
+                    else if (epsg >= 32601 && epsg <= 32660) result = `WGS 84 / UTM zone ${epsg - 32600}N (EPSG:${epsg})`;
+                    else if (epsg >= 31971 && epsg <= 31985) result = `SIRGAS 2000 / UTM zone ${epsg - 31960}S (EPSG:${epsg})`;
+                    else if (epsg >= 29187 && epsg <= 29195) result = `SAD 69 / UTM zone ${epsg - 29170}S (EPSG:${epsg})`;
+                    else result = `EPSG Code: ${epsg}`;
+                    return result;
+                }
+                return "Metadados de projeção ausentes";
+            } catch (error) { return "Erro ao ler GeoTIFF"; }
+        }
+
+        function extractCrsFeatures(text) {
+            let t = text.toLowerCase().replace(/[^a-z0-9]/g, '');
+            let f = { datum: '', type: '', zone: '', hemi: '' };
+            if (t.includes('sirgas2000') || t.includes('sirgas')) f.datum = 'sirgas2000';
+            else if (t.includes('wgs84') || t.includes('wgs1984')) f.datum = 'wgs84';
+            else if (t.includes('sad69') || t.includes('sad1969')) f.datum = 'sad69';
+
+            if (t.includes('geografico') || t.includes('geogcs')) f.type = 'geo';
+            else if (t.includes('utm') || t.includes('projcs')) f.type = 'utm';
+
+            let zMatch = t.match(/zone(\d{1,2})([sn]?)/) || t.match(/utm(\d{1,2})([sn]?)/);
+            if (!zMatch && f.type === 'utm') zMatch = t.match(/(\d{1,2})([sn])/);
+            if (zMatch) { f.type = 'utm'; f.zone = zMatch[1]; f.hemi = zMatch[2] || 's'; }
+            return f;
+        }
+
+        function compareCRS(expected, actual, ext) {
+            if (expected === "Não especificado no nome" || actual.includes("❌")) return 'error';
+            if (actual.includes("⚠️")) return 'unsupported';
+            let exp = extractCrsFeatures(expected), act = extractCrsFeatures(actual);
+            if (exp.type && act.type && exp.type !== act.type) return 'error';
+            if (exp.datum && act.datum && exp.datum !== act.datum) return 'error';
+            if (exp.zone && act.zone) {
+                if (exp.zone !== act.zone) return 'error';
+                if (exp.hemi && act.hemi && exp.hemi !== act.hemi) return 'error';
+            }
+            return 'match';
+        }
+
+        function getValidadorExtension(filename) {
+            const parts = filename.split('.'); return parts.length > 1 ? '.' + parts.pop() : '';
+        }
+
+        function updateValidadorDashboard() {
+            document.getElementById('validadorTotalFiles').textContent = validadorFileStats.total;
+            document.getElementById('validadorMatchFiles').textContent = validadorFileStats.match;
+            document.getElementById('validadorErrorFiles').textContent = validadorFileStats.error;
+            document.getElementById('validadorManualFiles').textContent = validadorFileStats.manual;
+        }
+
+        function renderValidadorResults(results) {
+            const tbody = document.getElementById('validadorTableBody'); tbody.innerHTML = '';
+            const grouped = {};
+            results.forEach(r => { if (!grouped[r.dirname]) grouped[r.dirname] = []; grouped[r.dirname].push(r); });
+            const sortedFolders = Object.keys(grouped).sort();
+
+            sortedFolders.forEach(folder => {
+                const folderTr = document.createElement('tr');
+                folderTr.className = "bg-slate-200 dark:bg-slate-700 border-y border-slate-300 dark:border-slate-600";
+                folderTr.innerHTML = `<td colspan="4" class="px-5 py-3 font-bold text-slate-800 dark:text-slate-200 text-sm"><i class="fas fa-folder-open text-blue-500 mr-2"></i> ${folder}</td>`;
+                tbody.appendChild(folderTr);
+
+                grouped[folder].forEach(r => {
+                    const tr = document.createElement('tr');
+                    let statusBadge = "";
+                    if(r.status === 'match') statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 border border-green-200 status-match"><i class="fas fa-check-circle mr-1.5"></i> OK</span>`;
+                    else if(r.status === 'error') statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200 status-error"><i class="fas fa-times-circle mr-1.5"></i> Erro</span>`;
+                    else statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700 border border-slate-300 status-manual"><i class="fas fa-exclamation-triangle mr-1.5"></i> Manual</span>`;
+
+                    tr.className = "hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-b border-slate-100 dark:border-slate-700/50";
+                    tr.innerHTML = `
+                        <td class="px-5 py-3 whitespace-nowrap text-center">${statusBadge}</td>
+                        <td class="px-5 py-3 break-words font-mono text-xs text-slate-700 dark:text-slate-300" style="white-space: normal; min-width: 250px;" title="Caminho Completo: ${r.path}">
+                            <i class="fas fa-file-alt text-slate-400 mr-1.5"></i>${r.filename}
+                        </td>
+                        <td class="px-5 py-3 whitespace-nowrap text-sm font-medium text-slate-600 dark:text-slate-400">${r.expected}</td>
+                        <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">${r.actual}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+        
+        document.getElementById('btnValidadorPdf').addEventListener('click', () => {
+            const element = document.getElementById('validadorResultsContainer');
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            if (isDarkMode) document.documentElement.classList.remove('dark');
+
+            const pdfBtn = document.getElementById('btnValidadorPdf');
+            const newFolderBtn = document.getElementById('btnValidadorNewFolder');
+            pdfBtn.style.display = 'none'; if (newFolderBtn) newFolderBtn.style.display = 'none';
+
+            const fileName = `Relatório Validação - ${validadorProject}.pdf`;
+
+            const opt = {
+                margin:       10,
+                filename:     fileName,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            const title = document.createElement('div');
+            title.innerHTML = `
+                <div style="border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 20px;">
+                    <h1 style="font-family: 'Inter', sans-serif; font-size: 24px; font-weight: bold; color: #0f172a; margin: 0;">Relatório de Validação Geoespacial (${validadorProject})</h1>
+                    <p style="font-family: 'Inter', sans-serif; font-size: 12px; color: #64748b; margin-top: 5px;">Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+                </div>
+            `;
+            element.prepend(title);
+
+            html2pdf().set(opt).from(element).outputPdf('blob').then(async (pdfBlob) => {
+                title.remove();
+                pdfBtn.style.display = 'flex'; if (newFolderBtn) newFolderBtn.style.display = 'flex';
+                if (isDarkMode) document.documentElement.classList.add('dark');
+
+                if (validadorRootDir) {
+                    try {
+                        const fileHandle = await validadorRootDir.getFileHandle(fileName, { create: true });
+                        const writable = await fileHandle.createWritable();
+                        await writable.write(pdfBlob); await writable.close();
+                        
+                        const originalText = pdfBtn.innerHTML;
+                        pdfBtn.innerHTML = '<i class="fas fa-check"></i> Salvo na pasta do projeto!';
+                        pdfBtn.classList.replace('bg-red-600', 'bg-green-600'); pdfBtn.classList.replace('hover:bg-red-700', 'hover:bg-green-700');
+                        setTimeout(() => {
+                            pdfBtn.innerHTML = originalText;
+                            pdfBtn.classList.replace('bg-green-600', 'bg-red-600'); pdfBtn.classList.replace('hover:bg-green-700', 'hover:bg-red-700');
+                        }, 3000);
+                        return;
+                    } catch (err) { console.warn("Fallback download padrão", err); }
+                }
+
+                const url = URL.createObjectURL(pdfBlob); const a = document.createElement('a'); a.href = url; a.download = fileName;
+                a.click(); URL.revokeObjectURL(url);
+            });
         });
 
         document.addEventListener('DOMContentLoaded', () => {
