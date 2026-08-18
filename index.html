@@ -553,6 +553,7 @@
             setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 2500);
         }
 
+        // --- Lógica Print AOI ---
         const fileInput = document.getElementById('fileInput');
         const fileLabel = document.getElementById('fileLabel');
         const canvasContainer = document.getElementById('canvasContainer');
@@ -1733,13 +1734,13 @@
         }
 
         function parseExpectedCRS(filename) {
-            let nameUpper = filename.toUpperCase().replace(/[-_]/g, ' ');
+            let nameUpper = filename.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-_]/g, ' ');
             let expected = "";
             if (nameUpper.includes("SIRGAS") || nameUpper.includes("SIRGAS2000") || nameUpper.includes("SIRGAS 2000")) expected = "SIRGAS 2000";
             else if (nameUpper.includes("WGS84") || nameUpper.includes("WGS 84")) expected = "WGS 84";
             else if (nameUpper.includes("SAD69") || nameUpper.includes("SAD 69")) expected = "SAD 69";
 
-            let isGeo = /\bGEO\b/.test(nameUpper) || nameUpper.includes("GEOGRAFICA") || nameUpper.includes("GEOGRÁFICA");
+            let isGeo = /\bGEO\b/.test(nameUpper) || nameUpper.includes("GEOGRAFICA") || nameUpper.includes("GEOGRAFICO");
             let fusoMatch = nameUpper.match(/(?:UTM|FUSO|ZONA)?[\s]*(\d{1,2})[\s]*([SN])\b/i);
             if (!fusoMatch) fusoMatch = nameUpper.match(/(?:UTM|FUSO|ZONA)[\s]*(\d{1,2})\b/i);
             
@@ -1806,31 +1807,52 @@
         }
 
         function extractCrsFeatures(text) {
-            let t = text.toLowerCase().replace(/[^a-z0-9]/g, '');
+            // CORREÇÃO CRÍTICA: Normalizar os acentos (Geográfico -> Geografico) ANTES de limpar caracteres não-alfanuméricos
+            let t = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
             let f = { datum: '', type: '', zone: '', hemi: '' };
+            
             if (t.includes('sirgas2000') || t.includes('sirgas')) f.datum = 'sirgas2000';
             else if (t.includes('wgs84') || t.includes('wgs1984')) f.datum = 'wgs84';
             else if (t.includes('sad69') || t.includes('sad1969')) f.datum = 'sad69';
 
-            if (t.includes('geografico') || t.includes('geogcs')) f.type = 'geo';
-            else if (t.includes('utm') || t.includes('projcs')) f.type = 'utm';
+            // Com os acentos removidos propriamente, a checagem 'geografico' agora funcionará
+            if (t.includes('geografico') || t.includes('geogcs') || t.includes('geogcrs') || t.includes('epsg4326') || t.includes('epsg4674') || t.includes('epsg4291')) f.type = 'geo';
+            else if (t.includes('utm') || t.includes('projcs') || t.includes('zone') || t.includes('fuso')) f.type = 'utm';
 
-            let zMatch = t.match(/zone(\d{1,2})([sn]?)/) || t.match(/utm(\d{1,2})([sn]?)/);
+            let zMatch = t.match(/zone(\d{1,2})([sn]?)/) || t.match(/utm(\d{1,2})([sn]?)/) || t.match(/fuso(\d{1,2})([sn]?)/);
             if (!zMatch && f.type === 'utm') zMatch = t.match(/(\d{1,2})([sn])/);
-            if (zMatch) { f.type = 'utm'; f.zone = zMatch[1]; f.hemi = zMatch[2] || 's'; }
+            
+            if (zMatch) { 
+                f.type = 'utm'; 
+                f.zone = zMatch[1]; 
+                f.hemi = zMatch[2] || 's'; 
+            }
             return f;
         }
 
         function compareCRS(expected, actual, ext) {
             if (expected === "Não especificado no nome" || actual.includes("❌")) return 'error';
             if (actual.includes("⚠️")) return 'unsupported';
-            let exp = extractCrsFeatures(expected), act = extractCrsFeatures(actual);
+            
+            let exp = extractCrsFeatures(expected);
+            let act = extractCrsFeatures(actual);
+            
+            // Verificação RÍGIDA de Tipo (Geo vs UTM)
             if (exp.type && act.type && exp.type !== act.type) return 'error';
+            
+            // Verificação RÍGIDA de Datum (SIRGAS 2000, WGS 84, etc)
             if (exp.datum && act.datum && exp.datum !== act.datum) return 'error';
-            if (exp.zone && act.zone) {
-                if (exp.zone !== act.zone) return 'error';
+            
+            // Verificação RÍGIDA de Zona/Fuso UTM
+            if (exp.type === 'utm' && act.type === 'utm') {
+                if (exp.zone && act.zone && exp.zone !== act.zone) return 'error';
                 if (exp.hemi && act.hemi && exp.hemi !== act.hemi) return 'error';
+                
+                // Se o nome do arquivo exigia que fosse um fuso (exp.zone detectado)
+                // Mas a leitura do arquivo não tem nenhum fuso (act.zone ausente), reprovar
+                if (exp.zone && !act.zone) return 'error'; 
             }
+            
             return 'match';
         }
 
