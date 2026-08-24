@@ -12,7 +12,7 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- JSZip (Print AOI) -->
+    <!-- JSZip (Print AOI, Buffer) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <!-- Leaflet CSS e JS (Print AOI) -->
@@ -31,6 +31,11 @@
     
     <!-- geotiff.js (Validador) -->
     <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
+
+    <!-- DEPENDÊNCIAS DO NOVO APP GERADOR DE BUFFER -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/togeojson/0.16.0/togeojson.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+    <script src="https://unpkg.com/jsts@2.11.0/dist/jsts.min.js"></script>
 
     <style>
         body {
@@ -125,6 +130,10 @@
                     </button>
                     <button onclick="switchTab('tab-validador')" id="btn-tab-validador" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i class="fas fa-satellite mr-2"></i>Validador Geo
+                    </button>
+                    <!-- NOVO BOTÃO GERADOR DE BUFFER -->
+                    <button onclick="switchTab('tab-buffer')" id="btn-tab-buffer" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-draw-polygon mr-2"></i>Gerador de Buffer
                     </button>
                     
                     <div class="border-l border-gray-300 h-6 mx-2 hidden sm:block"></div>
@@ -518,6 +527,132 @@
                     <button id="btnValidadorNewFolder" onclick="openValidadorFolderPicker()" class="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 transition-colors">
                         <i class="fas fa-redo-alt"></i> Analisar Nova Pasta
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA: GERADOR DE BUFFER (NOVO) -->
+        <div id="tab-buffer" class="tab-content max-w-4xl mx-auto w-full">
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8 border border-slate-200">
+                <div class="bg-blue-600 p-6 text-white text-center">
+                    <h1 class="text-2xl font-bold mb-2"><i class="fas fa-draw-polygon mr-2"></i> Gerador de Área (Buffer Automático)</h1>
+                    <p class="text-blue-100 text-sm">Cálculo exato em UTM SIRGAS 2000 para múltiplos arquivos</p>
+                </div>
+
+                <div class="p-6 md:p-8 space-y-6">
+                    
+                    <!-- Upload de Arquivo -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">1. Selecione os arquivos de interesse (.kml ou .kmz)</label>
+                        <div class="flex items-center justify-center w-full">
+                            <label for="bufferFileInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-8 h-8 mb-3 text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                    </svg>
+                                    <p class="mb-2 text-sm text-slate-500"><span class="font-semibold text-blue-600">Clique para enviar</span> ou arraste os arquivos</p>
+                                    <p id="bufferFileNameDisplay" class="text-xs text-blue-600 font-bold hidden text-center px-4"></p>
+                                </div>
+                                <input id="bufferFileInput" type="file" class="hidden" accept=".kml,.kmz" multiple />
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Configurações -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        
+                        <!-- Área Alvo -->
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">2. Escolha a Área Final</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="bufferTargetArea" value="1" class="text-blue-600 focus:ring-blue-500" checked>
+                                    <span class="text-slate-700 text-sm font-medium">1 km²</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="bufferTargetArea" value="3" class="text-blue-600 focus:ring-blue-500">
+                                    <span class="text-slate-700 text-sm font-medium">3 km²</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="bufferTargetArea" value="5" class="text-blue-600 focus:ring-blue-500">
+                                    <span class="text-slate-700 text-sm font-medium">5 km²</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="bufferTargetArea" value="25" class="text-blue-600 focus:ring-blue-500">
+                                    <span class="text-slate-700 text-sm font-medium">25 km²</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="bufferTargetArea" value="250" class="text-blue-600 focus:ring-blue-500">
+                                    <span class="text-slate-700 text-sm font-medium">250 km²</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="bufferTargetArea" value="custom" class="text-blue-600 focus:ring-blue-500">
+                                    <span class="text-slate-700 text-sm font-medium">Personalizado:</span>
+                                    <input type="number" id="bufferCustomAreaInput" placeholder="Ex: 10" class="ml-2 w-20 px-2 py-1 border border-slate-300 rounded-md focus:outline-none focus:border-blue-500 disabled:opacity-50 text-sm" disabled step="0.1" min="0.1">
+                                    <span class="text-slate-700 text-sm font-medium">km²</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Estilo do Buffer -->
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">3. Estilo das Bordas (Buffer)</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="bufferStyle" value="round" class="text-blue-600 focus:ring-blue-500" checked>
+                                    <span class="text-slate-700 text-sm font-medium">Arredondado</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="bufferStyle" value="regular" class="text-blue-600 focus:ring-blue-500">
+                                    <span class="text-slate-700 text-sm font-medium">Reto / Regular</span>
+                                </label>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-2">Arredondado suaviza as pontas. Reto cria formato mais quadrado e quinas exatas.</p>
+                        </div>
+
+                    </div>
+
+                    <!-- Botão Processar -->
+                    <button id="bufferProcessBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-md disabled:bg-slate-400 disabled:cursor-not-allowed">
+                        <i class="fas fa-cogs mr-2"></i> Processar Todos
+                    </button>
+
+                    <!-- Tela de Carregamento -->
+                    <div id="bufferLoadingScreen" class="hidden flex-col items-center justify-center p-6 bg-blue-50 rounded-lg border border-blue-100">
+                        <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p id="bufferLoadingText" class="text-blue-800 font-medium text-center">Processando arquivos...</p>
+                    </div>
+
+                    <!-- Resultado -->
+                    <div id="bufferResultScreen" class="hidden flex-col items-center justify-center p-6 bg-green-50 rounded-lg border border-green-200 w-full">
+                        <div class="text-green-500 mb-2">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-green-800 mb-1">Processo Concluído!</h3>
+                        <p id="bufferResultText" class="text-sm text-green-700 text-center mb-4">Arquivos gerados com sucesso.</p>
+                        
+                        <!-- Lista de Arquivos Gerados -->
+                        <div id="bufferDownloadList" class="w-full flex flex-col gap-2 mb-4 max-h-64 overflow-y-auto pr-2">
+                            <!-- Preenchido dinamicamente via JS -->
+                        </div>
+                        
+                        <button id="bufferDownloadAllBtn" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow transition items-center justify-center w-full md:w-auto gap-2 mt-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Baixar Todos (.zip)
+                        </button>
+                    </div>
+                    
+                    <!-- Mensagem de Erro -->
+                    <div id="bufferErrorScreen" class="hidden p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 text-sm">
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -1489,7 +1624,31 @@
         }
 
         function processFiles(files) {
-            const projectData = { interesse: [], brutos: [], processados: [] }, spotRawRegex = /^\d{3}-\d{3}_S[1-5]_\d{3}-\d{3}/i;
+            const projectData = { interesse: [], brutos: [], processados: [] };
+            
+            // 1. Identificar satélites a nível de projeto
+            let hasNoRawSatellite = false;
+            let hasRawAllowedSatellite = false;
+
+            for (let i = 0; i < files.length; i++) {
+                const p = files[i].customPath || files[i].webkitRelativePath || files[i].name;
+                
+                // Satélites que NÃO devem mostrar "Dados Brutos" (SPOT 1-5, Landsat, Sentinel)
+                if (/\bspot[\s-]*(1|2|3|4|5)\b/i.test(p) || /_S[1-5]_/i.test(p) ||
+                    /\blandsat\b/i.test(p) || /^LC0[89]/i.test(files[i].name) || /^LE07/i.test(files[i].name) || /^LT0[45]/i.test(files[i].name) ||
+                    /\bsentinel\b/i.test(p) || /^S2[AB]_/i.test(files[i].name)) {
+                    hasNoRawSatellite = true;
+                }
+                
+                // Satélites onde "Dados Brutos" são permitidos e comuns (ex: SPOT 6, Pleiades, etc)
+                if (/\b(spot[\s-]*6|pleiades|worldview|geoeye|quickbird|planet|ikonos|kompsat|jilin|legion|beijin|eros|triplesat|superview|skysat|rapideye|gaofen|blacksky)\b/i.test(p)) {
+                    hasRawAllowedSatellite = true;
+                }
+            }
+
+            // Oculta completamente a pasta Brutos se o projeto for apenas Landsat/Sentinel/SPOT 1-5
+            const hideBrutos = hasNoRawSatellite && !hasRawAllowedSatellite;
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i]; if (file.name.startsWith('.')) continue;
                 const pathToUse = file.customPath || file.webkitRelativePath || file.name, pathParts = pathToUse.split('/');
@@ -1501,14 +1660,25 @@
                     else if (normPart.includes("dados processados")) { belongsTo = 'processados'; if (p + 1 < pathParts.length - 1) subFolderName = pathParts[p+1]; }
                     if (belongsTo) break;
                 }
-                if (belongsTo === 'brutos' && spotRawRegex.test(file.name)) continue; 
+                
+                if (belongsTo === 'brutos') {
+                    if (hideBrutos) continue; // Pula todos os arquivos brutos se o projeto todo for isento
+                    
+                    // Fallback para projetos mistos: Ignora individualmente os arquivos brutos indesejados
+                    const isIndividualNoRaw = /^\d{3}-\d{3}_S[1-5]_\d{3}-\d{3}/i.test(file.name) || 
+                                              /\bspot[\s-]*(1|2|3|4|5)\b/i.test(pathToUse) ||
+                                              /\blandsat\b/i.test(pathToUse) || /^LC0[89]/i.test(file.name) || /^LE07/i.test(file.name) || /^LT0[45]/i.test(file.name) ||
+                                              /\bsentinel\b/i.test(pathToUse) || /^S2[AB]_/i.test(file.name);
+                    if (isIndividualNoRaw) continue; 
+                }
+
                 if (belongsTo) projectData[belongsTo].push({ name: file.name, path: pathToUse, subfolder: subFolderName });
             }
             generateReport(projectData);
         }
 
         function generateReport(data) {
-            let sectionCounter = 1, texto = "=======================================================\n        GUIA DO PROJETO - INSTRUÇÕES DE USO\n=======================================================\n\nOlá! Este documento foi criado para ajudar você a entender o que é cada arquivo entregue neste projeto de forma fácil e rápida.\n\n";
+            let sectionCounter = 1, texto = "=======================================================\n       GUIA DO PROJETO - INSTRUÇÕES DE USO\n=======================================================\n\nOlá! Este documento foi criado para ajudar você a entender o que é cada arquivo entregue neste projeto de forma fácil e rápida.\n\n";
             texto += "-------------------------------------------------------\n" + ` ${sectionCounter++}. ÁREA DE INTERESSE\n` + "-------------------------------------------------------\nContém o perímetro exato (polígono) que usamos como limite para buscar e processar as imagens.\n\n";
             if (data.interesse.length === 0) texto += "Nenhum arquivo encontrado nesta pasta.\n\n"; else { groupFiles(data.interesse).forEach(g => { let extStr = g.exts.map(e => `.${e}`).join(", "); texto += `[Arquivo] ${g.representativeName} (${extStr})\n`; }); texto += "\n"; }
             if (data.brutos.length > 0) { texto += "-------------------------------------------------------\n" + ` ${sectionCounter++}. DADOS BRUTOS\n` + "-------------------------------------------------------\nArquivos originais e metadados crus que vieram do satélite/sensor antes de passarem pelos nossos tratamentos.\nImportante: Se você não é um especialista que deseja refazer os processos do zero, PODE IGNORAR ESTA PASTA. Seu foco deve ser a pasta de 'Dados Processados'.\n\nIdentificamos " + groupFiles(data.brutos).length + " conjunto(s) de dados brutos nesta pasta.\n\n"; }
@@ -1807,7 +1977,6 @@
         }
 
         function extractCrsFeatures(text) {
-            // CORREÇÃO CRÍTICA: Normalizar os acentos (Geográfico -> Geografico) ANTES de limpar caracteres não-alfanuméricos
             let t = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
             let f = { datum: '', type: '', zone: '', hemi: '' };
             
@@ -1815,7 +1984,6 @@
             else if (t.includes('wgs84') || t.includes('wgs1984')) f.datum = 'wgs84';
             else if (t.includes('sad69') || t.includes('sad1969')) f.datum = 'sad69';
 
-            // Com os acentos removidos propriamente, a checagem 'geografico' agora funcionará
             if (t.includes('geografico') || t.includes('geogcs') || t.includes('geogcrs') || t.includes('epsg4326') || t.includes('epsg4674') || t.includes('epsg4291')) f.type = 'geo';
             else if (t.includes('utm') || t.includes('projcs') || t.includes('zone') || t.includes('fuso')) f.type = 'utm';
 
@@ -1837,19 +2005,11 @@
             let exp = extractCrsFeatures(expected);
             let act = extractCrsFeatures(actual);
             
-            // Verificação RÍGIDA de Tipo (Geo vs UTM)
             if (exp.type && act.type && exp.type !== act.type) return 'error';
-            
-            // Verificação RÍGIDA de Datum (SIRGAS 2000, WGS 84, etc)
             if (exp.datum && act.datum && exp.datum !== act.datum) return 'error';
-            
-            // Verificação RÍGIDA de Zona/Fuso UTM
             if (exp.type === 'utm' && act.type === 'utm') {
                 if (exp.zone && act.zone && exp.zone !== act.zone) return 'error';
                 if (exp.hemi && act.hemi && exp.hemi !== act.hemi) return 'error';
-                
-                // Se o nome do arquivo exigia que fosse um fuso (exp.zone detectado)
-                // Mas a leitura do arquivo não tem nenhum fuso (act.zone ausente), reprovar
                 if (exp.zone && !act.zone) return 'error'; 
             }
             
@@ -1954,6 +2114,395 @@
                 a.click(); URL.revokeObjectURL(url);
             });
         });
+
+        // ==========================================
+        // LÓGICA DO NOVO APP: GERADOR DE BUFFER
+        // ==========================================
+        const bufferFileInput = document.getElementById('bufferFileInput');
+        const bufferFileNameDisplay = document.getElementById('bufferFileNameDisplay');
+        const bufferProcessBtn = document.getElementById('bufferProcessBtn');
+        const bufferLoadingScreen = document.getElementById('bufferLoadingScreen');
+        const bufferResultScreen = document.getElementById('bufferResultScreen');
+        const bufferErrorScreen = document.getElementById('bufferErrorScreen');
+        const bufferLoadingText = document.getElementById('bufferLoadingText');
+        const bufferResultText = document.getElementById('bufferResultText');
+        const bufferDownloadList = document.getElementById('bufferDownloadList');
+        const bufferDownloadAllBtn = document.getElementById('bufferDownloadAllBtn');
+        const bufferTargetAreaRadios = document.querySelectorAll('input[name="bufferTargetArea"]');
+        const bufferCustomAreaInput = document.getElementById('bufferCustomAreaInput');
+
+        let bufferSelectedFiles = [];
+        let bufferProcessedFiles = [];
+
+        // Definindo projeção WGS84 para conversões
+        proj4.defs("WGS84", "+proj=longlat +datum=WGS84 +no_defs");
+
+        bufferTargetAreaRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'custom') {
+                    bufferCustomAreaInput.disabled = false;
+                    bufferCustomAreaInput.focus();
+                } else {
+                    bufferCustomAreaInput.disabled = true;
+                    bufferCustomAreaInput.value = '';
+                }
+            });
+        });
+
+        bufferFileInput.addEventListener('change', async (e) => {
+            bufferSelectedFiles = Array.from(e.target.files);
+            if (bufferSelectedFiles.length === 0) return;
+
+            if (bufferSelectedFiles.length === 1) {
+                bufferFileNameDisplay.innerHTML = `Arquivo: ${bufferSelectedFiles[0].name}`;
+            } else {
+                const limitNames = bufferSelectedFiles.slice(0, 3).map(f => f.name).join(', ');
+                const andMore = bufferSelectedFiles.length > 3 ? `... e mais ${bufferSelectedFiles.length - 3}` : '';
+                bufferFileNameDisplay.innerHTML = `${bufferSelectedFiles.length} arquivos selecionados.<br><span class="font-normal text-slate-500">${limitNames}${andMore}</span>`;
+            }
+            
+            bufferFileNameDisplay.classList.remove('hidden');
+            bufferResetScreens();
+        });
+
+        bufferProcessBtn.addEventListener('click', async () => {
+            if (bufferSelectedFiles.length === 0) return bufferShowError("Por favor, selecione pelo menos um arquivo KML/KMZ.");
+            
+            let targetAreaKm2 = 0;
+            const selectedRadio = document.querySelector('input[name="bufferTargetArea"]:checked').value;
+            
+            if (selectedRadio === 'custom') {
+                targetAreaKm2 = parseFloat(bufferCustomAreaInput.value);
+                if (isNaN(targetAreaKm2) || targetAreaKm2 <= 0) {
+                    return bufferShowError("Por favor, digite um valor válido para a área personalizada.");
+                }
+            } else {
+                targetAreaKm2 = parseFloat(selectedRadio);
+            }
+
+            const bufferStyle = document.querySelector('input[name="bufferStyle"]:checked').value;
+
+            bufferResetScreens();
+            bufferLoadingScreen.classList.remove('hidden');
+            bufferLoadingScreen.classList.add('flex');
+            bufferProcessBtn.disabled = true;
+            bufferProcessedFiles = [];
+
+            setTimeout(async () => {
+                for (let i = 0; i < bufferSelectedFiles.length; i++) {
+                    const file = bufferSelectedFiles[i];
+                    bufferUpdateLoading(`Processando ${i + 1} de ${bufferSelectedFiles.length}...<br><span class="text-xs">${file.name}</span>`);
+                    
+                    try {
+                        const result = await processSingleBufferFile(file, targetAreaKm2, bufferStyle);
+                        bufferProcessedFiles.push(result);
+                    } catch (err) {
+                        console.error(`Erro no arquivo ${file.name}:`, err);
+                        bufferProcessedFiles.push({
+                            originalName: file.name,
+                            status: 'error',
+                            msg: err.message || "Erro desconhecido"
+                        });
+                    }
+                }
+                bufferFinishProcessing(targetAreaKm2);
+            }, 100);
+        });
+
+        async function processSingleBufferFile(file, targetAreaKm2, bufferStyle) {
+            let fileData;
+            
+            if (file.name.toLowerCase().endsWith('.kmz')) {
+                const zip = await JSZip.loadAsync(file);
+                const kmlFile = Object.values(zip.files).find(f => f.name.toLowerCase().endsWith('.kml'));
+                if (!kmlFile) throw new Error("Não contém arquivo KML válido interno.");
+                fileData = await kmlFile.async("string");
+            } else {
+                fileData = await file.text();
+            }
+
+            const parser = new DOMParser();
+            const kmlDoc = parser.parseFromString(fileData, "text/xml");
+            if (kmlDoc.querySelector('parsererror')) {
+                throw new Error("Erro de formatação XML.");
+            }
+
+            const geoJson = toGeoJSON.kml(kmlDoc);
+            
+            function findFirstGeometry(node) {
+                if (!node) return null;
+                if (node.type === 'FeatureCollection') {
+                    for (const f of (node.features || [])) {
+                        const res = findFirstGeometry(f);
+                        if (res) return res;
+                    }
+                } else if (node.type === 'Feature') {
+                    return findFirstGeometry(node.geometry);
+                } else if (node.type === 'GeometryCollection') {
+                    for (const g of (node.geometries || [])) {
+                        const res = findFirstGeometry(g);
+                        if (res) return res;
+                    }
+                } else if (['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'].includes(node.type)) {
+                    return node;
+                }
+                return null;
+            }
+
+            const extractedGeometry = findFirstGeometry(geoJson);
+            
+            if (!extractedGeometry) {
+                throw new Error("Nenhuma geometria válida encontrada (Polígono, Linha ou Ponto).");
+            }
+
+            function getFirstCoordinate(geometry) {
+                if (geometry.type === 'Point') return geometry.coordinates;
+                if (geometry.type === 'MultiPoint' || geometry.type === 'LineString') return geometry.coordinates[0];
+                if (geometry.type === 'MultiLineString' || geometry.type === 'Polygon') return geometry.coordinates[0][0];
+                if (geometry.type === 'MultiPolygon') return geometry.coordinates[0][0][0];
+                return null;
+            }
+
+            const firstCoord = getFirstCoordinate(extractedGeometry);
+            if (!firstCoord) throw new Error("Coordenadas inválidas.");
+
+            const zone = Math.floor((firstCoord[0] + 180) / 6) + 1;
+            const isSouth = firstCoord[1] < 0;
+            const utmProjString = `+proj=utm +zone=${zone} ${isSouth ? '+south ' : ''}+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs`;
+            proj4.defs("UTM_LOCAL", utmProjString);
+
+            function mapCoordinates(coords, transformFn) {
+                if (typeof coords[0] === 'number') {
+                    return transformFn(coords);
+                }
+                return coords.map(c => mapCoordinates(c, transformFn));
+            }
+
+            const utmCoordinates = mapCoordinates(extractedGeometry.coordinates, (coord) => {
+                return proj4("WGS84", "UTM_LOCAL", coord);
+            });
+
+            const geoJsonReader = new jsts.io.GeoJSONReader();
+            const jstsGeom = geoJsonReader.read({
+                type: extractedGeometry.type,
+                coordinates: utmCoordinates
+            });
+
+            const initialAreaM2 = jstsGeom.getArea();
+            const targetAreaM2 = targetAreaKm2 * 1000000;
+            
+            const bufferParams = new jsts.operation.buffer.BufferParameters();
+            if (bufferStyle === 'regular') {
+                bufferParams.setJoinStyle(2); 
+                bufferParams.setEndCapStyle(3); 
+                bufferParams.setMitreLimit(50.0);
+            } else {
+                bufferParams.setJoinStyle(1); 
+                bufferParams.setEndCapStyle(1); 
+            }
+
+            let low = initialAreaM2 > 0 ? -20000 : 0.0001; 
+            let high = 50000;
+            let mid = 0;
+            let finalGeom = null;
+            const tolerance = 5;
+
+            for (let i = 0; i < 100; i++) {
+                mid = (low + high) / 2;
+                const buffered = jstsGeom.buffer(mid, bufferParams);
+                const currentArea = buffered.getArea();
+                
+                if (Math.abs(currentArea - targetAreaM2) <= tolerance) {
+                    finalGeom = buffered;
+                    break;
+                }
+                
+                if (currentArea < targetAreaM2) low = mid;
+                else high = mid;
+
+                if (i === 99) finalGeom = buffered;
+            }
+
+            if (!finalGeom || finalGeom.isEmpty()) {
+                throw new Error("Falha matemática ao gerar o polígono.");
+            }
+
+            const geoJsonWriter = new jsts.io.GeoJSONWriter();
+            const bufferedGeoJsonUTM = geoJsonWriter.write(finalGeom);
+
+            const wgs84Coordinates = mapCoordinates(bufferedGeoJsonUTM.coordinates, (coord) => {
+                return proj4("UTM_LOCAL", "WGS84", coord);
+            });
+
+            function generateLinearRing(ringCoords, tagType) {
+                const coordStr = ringCoords.map(c => `${c[0]},${c[1]},0`).join(' ');
+                return `<${tagType}><LinearRing><coordinates>${coordStr}</coordinates></LinearRing></${tagType}>`;
+            }
+
+            let coordsString = "";
+            if (bufferedGeoJsonUTM.type === 'Polygon') {
+                coordsString += "<Polygon>";
+                coordsString += generateLinearRing(wgs84Coordinates[0], "outerBoundaryIs");
+                for (let i = 1; i < wgs84Coordinates.length; i++) {
+                    coordsString += generateLinearRing(wgs84Coordinates[i], "innerBoundaryIs");
+                }
+                coordsString += "</Polygon>";
+            } else if (bufferedGeoJsonUTM.type === 'MultiPolygon') {
+                coordsString += "<MultiGeometry>";
+                wgs84Coordinates.forEach(polygon => {
+                    coordsString += "<Polygon>";
+                    coordsString += generateLinearRing(polygon[0], "outerBoundaryIs");
+                    for (let i = 1; i < polygon.length; i++) {
+                        coordsString += generateLinearRing(polygon[i], "innerBoundaryIs");
+                    }
+                    coordsString += "</Polygon>";
+                });
+                coordsString += "</MultiGeometry>";
+            }
+
+            const baseName = file.name.replace(/\.[^/.]+$/, "");
+            const finalFileName = `${baseName} - ${targetAreaKm2}km2.kml`;
+
+            const finalKmlString = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${finalFileName}</name>
+    <description>Buffer gerado via UTM SIRGAS 2000 - Zona ${zone}${isSouth ? 'S' : 'N'} | Expansão: ${mid.toFixed(2)}m</description>
+    <Style id="polyStyle">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>400000ff</color>
+      </PolyStyle>
+    </Style>
+    <Placemark>
+      <name>Área ${targetAreaKm2}km²</name>
+      <styleUrl>#polyStyle</styleUrl>
+      ${coordsString}
+    </Placemark>
+  </Document>
+</kml>`;
+
+            return {
+                originalName: file.name,
+                finalName: finalFileName,
+                kmlString: finalKmlString,
+                status: 'success',
+                bufferDistance: mid,
+                zone: `${zone}${isSouth ? 'S' : 'N'}`
+            };
+        }
+
+        function bufferFinishProcessing(targetAreaKm2) {
+            bufferLoadingScreen.classList.add('hidden');
+            bufferLoadingScreen.classList.remove('flex');
+            bufferResultScreen.classList.remove('hidden');
+            bufferResultScreen.classList.add('flex');
+            bufferProcessBtn.disabled = false;
+            
+            bufferDownloadList.innerHTML = '';
+            let successCount = 0;
+
+            bufferProcessedFiles.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-3 bg-white dark:bg-slate-700 rounded border border-gray-200 dark:border-slate-600 shadow-sm w-full text-left";
+                
+                if (item.status === 'success') {
+                    successCount++;
+                    div.innerHTML = `
+                        <div class="flex-1 min-w-0 pr-4">
+                            <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate" title="${item.finalName}">${item.finalName}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 truncate">Buffer: +${item.bufferDistance.toFixed(1)}m (UTM ${item.zone})</p>
+                        </div>
+                        <button onclick="bufferDownloadSingleFile(${index})" class="flex-shrink-0 bg-green-100 hover:bg-green-200 text-green-700 font-bold py-1 px-3 rounded text-sm transition">
+                            Baixar
+                        </button>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <div class="flex-1 min-w-0 pr-4">
+                            <p class="text-sm font-semibold text-red-600 truncate" title="${item.originalName}">${item.originalName}</p>
+                            <p class="text-xs text-red-500 truncate" title="${item.msg}">Erro: ${item.msg}</p>
+                        </div>
+                    `;
+                }
+                bufferDownloadList.appendChild(div);
+            });
+
+            bufferResultText.innerHTML = `<b>${successCount} de ${bufferProcessedFiles.length}</b> arquivos processados com sucesso.`;
+
+            if (successCount > 1) {
+                bufferDownloadAllBtn.classList.remove('hidden');
+                bufferDownloadAllBtn.classList.add('flex');
+                bufferDownloadAllBtn.onclick = () => bufferDownloadAllAsZip(targetAreaKm2);
+            } else {
+                bufferDownloadAllBtn.classList.add('hidden');
+                bufferDownloadAllBtn.classList.remove('flex');
+            }
+        }
+
+        function bufferUpdateLoading(text) {
+            bufferLoadingText.innerHTML = text;
+        }
+
+        function bufferResetScreens() {
+            bufferErrorScreen.classList.add('hidden');
+            bufferResultScreen.classList.add('hidden');
+            bufferResultScreen.classList.remove('flex');
+            bufferLoadingScreen.classList.add('hidden');
+            bufferLoadingScreen.classList.remove('flex');
+        }
+
+        function bufferShowError(msg) {
+            bufferErrorScreen.textContent = msg;
+            bufferErrorScreen.classList.remove('hidden');
+        }
+
+        window.bufferDownloadSingleFile = async (index) => {
+            const item = bufferProcessedFiles[index];
+            const blob = new Blob([item.kmlString], { type: "application/vnd.google-earth.kml+xml" });
+            bufferTriggerDownload(blob, item.finalName);
+        };
+
+        async function bufferDownloadAllAsZip(targetAreaKm2) {
+            const zip = new JSZip();
+            bufferProcessedFiles.forEach(item => {
+                if (item.status === 'success') {
+                    zip.file(item.finalName, item.kmlString);
+                }
+            });
+            
+            const zipBlob = await zip.generateAsync({ type: "blob" });
+            bufferTriggerDownload(zipBlob, `Lote_Buffers_${targetAreaKm2}km2.zip`);
+        }
+
+        async function bufferTriggerDownload(blob, filename) {
+            try {
+                if (window.showSaveFilePicker) {
+                    const handle = await window.showSaveFilePicker({
+                        id: 'smart-buffer-app-save',
+                        suggestedName: filename,
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    return; 
+                }
+            } catch (err) {
+                console.log("Fallback para modo de download clássico acionado.", err);
+            }
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             addArea('wt'); 
