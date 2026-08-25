@@ -559,55 +559,97 @@
                     </div>
 
                     <!-- Configurações -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 md:p-6 rounded-xl border border-slate-200">
                         
-                        <!-- Área Alvo -->
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">2. Escolha a Área Final</label>
-                            <div class="space-y-2">
-                                <label class="flex items-center space-x-2">
-                                    <input type="radio" name="bufferTargetArea" value="1" class="text-blue-600 focus:ring-blue-500" checked>
-                                    <span class="text-slate-700 text-sm font-medium">1 km²</span>
-                                </label>
-                                <label class="flex items-center space-x-2">
-                                    <input type="radio" name="bufferTargetArea" value="3" class="text-blue-600 focus:ring-blue-500">
-                                    <span class="text-slate-700 text-sm font-medium">3 km²</span>
-                                </label>
-                                <label class="flex items-center space-x-2">
-                                    <input type="radio" name="bufferTargetArea" value="5" class="text-blue-600 focus:ring-blue-500">
-                                    <span class="text-slate-700 text-sm font-medium">5 km²</span>
-                                </label>
-                                <label class="flex items-center space-x-2">
-                                    <input type="radio" name="bufferTargetArea" value="25" class="text-blue-600 focus:ring-blue-500">
-                                    <span class="text-slate-700 text-sm font-medium">25 km²</span>
-                                </label>
-                                <label class="flex items-center space-x-2">
-                                    <input type="radio" name="bufferTargetArea" value="250" class="text-blue-600 focus:ring-blue-500">
-                                    <span class="text-slate-700 text-sm font-medium">250 km²</span>
-                                </label>
-                                <label class="flex items-center space-x-2">
-                                    <input type="radio" name="bufferTargetArea" value="custom" class="text-blue-600 focus:ring-blue-500">
-                                    <span class="text-slate-700 text-sm font-medium">Personalizado:</span>
-                                    <input type="number" id="bufferCustomAreaInput" placeholder="Ex: 10" class="ml-2 w-20 px-2 py-1 border border-slate-300 rounded-md focus:outline-none focus:border-blue-500 disabled:opacity-50 text-sm" disabled step="0.1" min="0.1">
-                                    <span class="text-slate-700 text-sm font-medium">km²</span>
-                                </label>
+                        <!-- Modo de Cálculo -->
+                        <div class="flex flex-col gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">2. Modo de Cálculo</label>
+                                <div class="flex flex-col sm:flex-row gap-3 mb-3">
+                                    <label class="flex items-center space-x-2 bg-white px-3 py-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition w-full">
+                                        <input type="radio" name="bufferMode" value="area" class="text-blue-600 focus:ring-blue-500" checked onchange="toggleBufferMode()">
+                                        <span class="text-slate-700 text-sm font-medium">Área Final (km²)</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 bg-white px-3 py-2 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition w-full">
+                                        <input type="radio" name="bufferMode" value="distance" class="text-blue-600 focus:ring-blue-500" onchange="toggleBufferMode()">
+                                        <span class="text-slate-700 text-sm font-medium">Distância Fixa (m)</span>
+                                    </label>
+                                </div>
+
+                                <!-- Opções de Área -->
+                                <div id="bufferAreaOptions" class="space-y-2 pl-2 md:pl-4 border-l-2 border-blue-200 transition-all">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="radio" name="bufferTargetArea" value="1" class="text-blue-600 focus:ring-blue-500" checked>
+                                        <span class="text-slate-700 text-sm font-medium">1 km²</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="radio" name="bufferTargetArea" value="3" class="text-blue-600 focus:ring-blue-500">
+                                        <span class="text-slate-700 text-sm font-medium">3 km²</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="radio" name="bufferTargetArea" value="5" class="text-blue-600 focus:ring-blue-500">
+                                        <span class="text-slate-700 text-sm font-medium">5 km²</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="radio" name="bufferTargetArea" value="25" class="text-blue-600 focus:ring-blue-500">
+                                        <span class="text-slate-700 text-sm font-medium">25 km²</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="radio" name="bufferTargetArea" value="250" class="text-blue-600 focus:ring-blue-500">
+                                        <span class="text-slate-700 text-sm font-medium">250 km²</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="radio" name="bufferTargetArea" value="custom" class="text-blue-600 focus:ring-blue-500">
+                                        <span class="text-slate-700 text-sm font-medium">Personalizado:</span>
+                                        <input type="number" id="bufferCustomAreaInput" placeholder="Ex: 10" class="ml-2 w-20 px-2 py-1 border border-slate-300 rounded-md focus:outline-none focus:border-blue-500 disabled:opacity-50 text-sm" disabled step="0.1" min="0.1">
+                                        <span class="text-slate-700 text-sm font-medium">km²</span>
+                                    </label>
+                                </div>
+
+                                <!-- Opções de Distância -->
+                                <div id="bufferDistanceOptions" class="hidden space-y-2 pl-2 md:pl-4 border-l-2 border-blue-200 transition-all">
+                                    <label class="flex items-center space-x-2">
+                                        <span class="text-slate-700 text-sm font-medium">Raio (Buffer):</span>
+                                        <input type="number" id="bufferDistanceInput" placeholder="Ex: 50" class="w-24 px-2 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:border-blue-500 text-sm">
+                                        <span class="text-slate-700 text-sm font-medium">metros</span>
+                                    </label>
+                                    <p class="text-xs text-slate-500 mt-1">Valores positivos expandem, valores negativos (ex: -50) retraem a área.</p>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Estilo do Buffer -->
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">3. Estilo das Bordas (Buffer)</label>
-                            <div class="space-y-2">
-                                <label class="flex items-center space-x-2">
-                                    <input type="radio" name="bufferStyle" value="round" class="text-blue-600 focus:ring-blue-500" checked>
-                                    <span class="text-slate-700 text-sm font-medium">Arredondado</span>
-                                </label>
-                                <label class="flex items-center space-x-2">
-                                    <input type="radio" name="bufferStyle" value="regular" class="text-blue-600 focus:ring-blue-500">
-                                    <span class="text-slate-700 text-sm font-medium">Reto / Regular</span>
-                                </label>
+                        <!-- Opções Avançadas e Estilo -->
+                        <div class="flex flex-col gap-6">
+                            
+                            <!-- Comportamento Multi-poligonos -->
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">3. Múltiplos Polígonos</label>
+                                <div class="space-y-3 bg-white p-3 border border-slate-200 rounded-lg">
+                                    <label class="flex items-start space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="bufferMergeCheckbox" class="text-blue-600 focus:ring-blue-500 mt-0.5" checked>
+                                        <span class="text-slate-700 text-sm leading-tight font-medium">Mesclar sobreposições <br><span class="text-[10px] text-slate-400 font-normal">Une áreas que entrarem em conflito (Dissolve)</span></span>
+                                    </label>
+                                    <label class="flex items-start space-x-2 cursor-pointer pt-2 border-t border-slate-100">
+                                        <input type="checkbox" id="bufferSeparateCheckbox" class="text-blue-600 focus:ring-blue-500 mt-0.5" checked>
+                                        <span class="text-slate-700 text-sm leading-tight font-medium">Individualizar polígonos <br><span class="text-[10px] text-slate-400 font-normal">Gera um arquivo para cada polígono encontrado</span></span>
+                                    </label>
+                                </div>
                             </div>
-                            <p class="text-xs text-slate-500 mt-2">Arredondado suaviza as pontas. Reto cria formato mais quadrado e quinas exatas.</p>
+
+                            <!-- Estilo do Buffer -->
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">4. Estilo das Bordas (Cantos)</label>
+                                <div class="flex gap-4">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="bufferStyle" value="round" class="text-blue-600 focus:ring-blue-500" checked>
+                                        <span class="text-slate-700 text-sm font-medium">Arredondado</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="bufferStyle" value="regular" class="text-blue-600 focus:ring-blue-500">
+                                        <span class="text-slate-700 text-sm font-medium">Reto / Angular</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
@@ -2130,12 +2172,26 @@
         const bufferDownloadAllBtn = document.getElementById('bufferDownloadAllBtn');
         const bufferTargetAreaRadios = document.querySelectorAll('input[name="bufferTargetArea"]');
         const bufferCustomAreaInput = document.getElementById('bufferCustomAreaInput');
+        const bufferDistanceInput = document.getElementById('bufferDistanceInput');
+        const bufferMergeCheckbox = document.getElementById('bufferMergeCheckbox');
+        const bufferSeparateCheckbox = document.getElementById('bufferSeparateCheckbox');
 
         let bufferSelectedFiles = [];
         let bufferProcessedFiles = [];
 
         // Definindo projeção WGS84 para conversões
         proj4.defs("WGS84", "+proj=longlat +datum=WGS84 +no_defs");
+
+        window.toggleBufferMode = function() {
+            const mode = document.querySelector('input[name="bufferMode"]:checked').value;
+            const areaOpts = document.getElementById('bufferAreaOptions');
+            const distOpts = document.getElementById('bufferDistanceOptions');
+            if (mode === 'area') {
+                areaOpts.classList.remove('hidden'); distOpts.classList.add('hidden');
+            } else {
+                areaOpts.classList.add('hidden'); distOpts.classList.remove('hidden');
+            }
+        };
 
         bufferTargetAreaRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -2168,19 +2224,31 @@
         bufferProcessBtn.addEventListener('click', async () => {
             if (bufferSelectedFiles.length === 0) return bufferShowError("Por favor, selecione pelo menos um arquivo KML/KMZ.");
             
+            const mode = document.querySelector('input[name="bufferMode"]:checked').value;
             let targetAreaKm2 = 0;
-            const selectedRadio = document.querySelector('input[name="bufferTargetArea"]:checked').value;
-            
-            if (selectedRadio === 'custom') {
-                targetAreaKm2 = parseFloat(bufferCustomAreaInput.value);
-                if (isNaN(targetAreaKm2) || targetAreaKm2 <= 0) {
-                    return bufferShowError("Por favor, digite um valor válido para a área personalizada.");
+            let distVal = 0;
+
+            if (mode === 'area') {
+                const selectedRadio = document.querySelector('input[name="bufferTargetArea"]:checked').value;
+                if (selectedRadio === 'custom') {
+                    targetAreaKm2 = parseFloat(bufferCustomAreaInput.value);
+                    if (isNaN(targetAreaKm2) || targetAreaKm2 <= 0) return bufferShowError("Por favor, digite um valor válido para a área.");
+                } else {
+                    targetAreaKm2 = parseFloat(selectedRadio);
                 }
             } else {
-                targetAreaKm2 = parseFloat(selectedRadio);
+                distVal = parseFloat(bufferDistanceInput.value);
+                if (isNaN(distVal)) return bufferShowError("Por favor, digite um valor válido para a distância em metros.");
             }
 
-            const bufferStyle = document.querySelector('input[name="bufferStyle"]:checked').value;
+            const config = {
+                mode: mode,
+                targetAreaKm2: targetAreaKm2,
+                distVal: distVal,
+                bufferStyle: document.querySelector('input[name="bufferStyle"]:checked').value,
+                mergeOverlaps: bufferMergeCheckbox.checked,
+                separateFiles: bufferSeparateCheckbox.checked
+            };
 
             bufferResetScreens();
             bufferLoadingScreen.classList.remove('hidden');
@@ -2194,8 +2262,8 @@
                     bufferUpdateLoading(`Processando ${i + 1} de ${bufferSelectedFiles.length}...<br><span class="text-xs">${file.name}</span>`);
                     
                     try {
-                        const result = await processSingleBufferFile(file, targetAreaKm2, bufferStyle);
-                        bufferProcessedFiles.push(result);
+                        const results = await processSingleBufferFile(file, config);
+                        bufferProcessedFiles.push(...results);
                     } catch (err) {
                         console.error(`Erro no arquivo ${file.name}:`, err);
                         bufferProcessedFiles.push({
@@ -2205,11 +2273,11 @@
                         });
                     }
                 }
-                bufferFinishProcessing(targetAreaKm2);
+                bufferFinishProcessing(mode === 'area' ? `${targetAreaKm2}km2` : `${distVal}m`);
             }, 100);
         });
 
-        async function processSingleBufferFile(file, targetAreaKm2, bufferStyle) {
+        async function processSingleBufferFile(file, config) {
             let fileData;
             
             if (file.name.toLowerCase().endsWith('.kmz')) {
@@ -2229,30 +2297,25 @@
 
             const geoJson = toGeoJSON.kml(kmlDoc);
             
-            function findFirstGeometry(node) {
-                if (!node) return null;
+            function extractAllGeometries(node) {
+                let geoms = [];
+                if (!node) return geoms;
                 if (node.type === 'FeatureCollection') {
-                    for (const f of (node.features || [])) {
-                        const res = findFirstGeometry(f);
-                        if (res) return res;
-                    }
+                    for (const f of (node.features || [])) geoms.push(...extractAllGeometries(f));
                 } else if (node.type === 'Feature') {
-                    return findFirstGeometry(node.geometry);
+                    geoms.push(...extractAllGeometries(node.geometry));
                 } else if (node.type === 'GeometryCollection') {
-                    for (const g of (node.geometries || [])) {
-                        const res = findFirstGeometry(g);
-                        if (res) return res;
-                    }
-                } else if (['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'].includes(node.type)) {
-                    return node;
+                    for (const g of (node.geometries || [])) geoms.push(...extractAllGeometries(g));
+                } else if (['Polygon', 'MultiPolygon', 'LineString', 'MultiLineString', 'Point', 'MultiPoint'].includes(node.type)) {
+                    geoms.push(node);
                 }
-                return null;
+                return geoms;
             }
 
-            const extractedGeometry = findFirstGeometry(geoJson);
+            const extractedGeometries = extractAllGeometries(geoJson);
             
-            if (!extractedGeometry) {
-                throw new Error("Nenhuma geometria válida encontrada (Polígono, Linha ou Ponto).");
+            if (extractedGeometries.length === 0) {
+                throw new Error("Nenhuma geometria válida encontrada.");
             }
 
             function getFirstCoordinate(geometry) {
@@ -2263,7 +2326,7 @@
                 return null;
             }
 
-            const firstCoord = getFirstCoordinate(extractedGeometry);
+            const firstCoord = getFirstCoordinate(extractedGeometries[0]);
             if (!firstCoord) throw new Error("Coordenadas inválidas.");
 
             const zone = Math.floor((firstCoord[0] + 180) / 6) + 1;
@@ -2272,27 +2335,18 @@
             proj4.defs("UTM_LOCAL", utmProjString);
 
             function mapCoordinates(coords, transformFn) {
-                if (typeof coords[0] === 'number') {
-                    return transformFn(coords);
-                }
+                if (typeof coords[0] === 'number') return transformFn(coords);
                 return coords.map(c => mapCoordinates(c, transformFn));
             }
 
-            const utmCoordinates = mapCoordinates(extractedGeometry.coordinates, (coord) => {
-                return proj4("WGS84", "UTM_LOCAL", coord);
-            });
-
             const geoJsonReader = new jsts.io.GeoJSONReader();
-            const jstsGeom = geoJsonReader.read({
-                type: extractedGeometry.type,
-                coordinates: utmCoordinates
+            const jstsGeometries = extractedGeometries.map(geom => {
+                const utmCoords = mapCoordinates(geom.coordinates, (coord) => proj4("WGS84", "UTM_LOCAL", coord));
+                return geoJsonReader.read({ type: geom.type, coordinates: utmCoords });
             });
-
-            const initialAreaM2 = jstsGeom.getArea();
-            const targetAreaM2 = targetAreaKm2 * 1000000;
             
             const bufferParams = new jsts.operation.buffer.BufferParameters();
-            if (bufferStyle === 'regular') {
+            if (config.bufferStyle === 'regular') {
                 bufferParams.setJoinStyle(2); 
                 bufferParams.setEndCapStyle(3); 
                 bufferParams.setMitreLimit(50.0);
@@ -2301,73 +2355,125 @@
                 bufferParams.setEndCapStyle(1); 
             }
 
-            let low = initialAreaM2 > 0 ? -20000 : 0.0001; 
-            let high = 50000;
-            let mid = 0;
-            let finalGeom = null;
-            const tolerance = 5;
+            function processJstsGeoms(geomArray, nameSuffix) {
+                function getBufferedResult(dist) {
+                    let bufferedList = geomArray.map(g => g.buffer(dist, bufferParams));
+                    bufferedList = bufferedList.filter(g => !g.isEmpty());
+                    
+                    if (bufferedList.length === 0) return { geom: new jsts.geom.GeometryFactory().createGeometryCollection([]), area: 0 };
 
-            for (let i = 0; i < 100; i++) {
-                mid = (low + high) / 2;
-                const buffered = jstsGeom.buffer(mid, bufferParams);
-                const currentArea = buffered.getArea();
-                
-                if (Math.abs(currentArea - targetAreaM2) <= tolerance) {
-                    finalGeom = buffered;
-                    break;
-                }
-                
-                if (currentArea < targetAreaM2) low = mid;
-                else high = mid;
-
-                if (i === 99) finalGeom = buffered;
-            }
-
-            if (!finalGeom || finalGeom.isEmpty()) {
-                throw new Error("Falha matemática ao gerar o polígono.");
-            }
-
-            const geoJsonWriter = new jsts.io.GeoJSONWriter();
-            const bufferedGeoJsonUTM = geoJsonWriter.write(finalGeom);
-
-            const wgs84Coordinates = mapCoordinates(bufferedGeoJsonUTM.coordinates, (coord) => {
-                return proj4("UTM_LOCAL", "WGS84", coord);
-            });
-
-            function generateLinearRing(ringCoords, tagType) {
-                const coordStr = ringCoords.map(c => `${c[0]},${c[1]},0`).join(' ');
-                return `<${tagType}><LinearRing><coordinates>${coordStr}</coordinates></LinearRing></${tagType}>`;
-            }
-
-            let coordsString = "";
-            if (bufferedGeoJsonUTM.type === 'Polygon') {
-                coordsString += "<Polygon>";
-                coordsString += generateLinearRing(wgs84Coordinates[0], "outerBoundaryIs");
-                for (let i = 1; i < wgs84Coordinates.length; i++) {
-                    coordsString += generateLinearRing(wgs84Coordinates[i], "innerBoundaryIs");
-                }
-                coordsString += "</Polygon>";
-            } else if (bufferedGeoJsonUTM.type === 'MultiPolygon') {
-                coordsString += "<MultiGeometry>";
-                wgs84Coordinates.forEach(polygon => {
-                    coordsString += "<Polygon>";
-                    coordsString += generateLinearRing(polygon[0], "outerBoundaryIs");
-                    for (let i = 1; i < polygon.length; i++) {
-                        coordsString += generateLinearRing(polygon[i], "innerBoundaryIs");
+                    let finalG;
+                    if (config.mergeOverlaps && !config.separateFiles) {
+                        const JSTSCollection = new jsts.geom.GeometryFactory().createGeometryCollection(bufferedList);
+                        finalG = jsts.operation.union.UnaryUnionOp.union(JSTSCollection);
+                    } else {
+                        finalG = new jsts.geom.GeometryFactory().createGeometryCollection(bufferedList);
+                        if (bufferedList.length === 1 && config.separateFiles) finalG = bufferedList[0]; 
                     }
-                    coordsString += "</Polygon>";
-                });
-                coordsString += "</MultiGeometry>";
-            }
+                    return { geom: finalG, area: finalG.getArea() };
+                }
 
-            const baseName = file.name.replace(/\.[^/.]+$/, "");
-            const finalFileName = `${baseName} - ${targetAreaKm2}km2.kml`;
+                let finalGeom = null;
+                let finalDistance = 0;
 
-            const finalKmlString = `<?xml version="1.0" encoding="UTF-8"?>
+                if (config.mode === 'distance') {
+                    finalDistance = config.distVal;
+                    const res = getBufferedResult(finalDistance);
+                    finalGeom = res.geom;
+                    if (finalGeom.isEmpty()) throw new Error("O valor de buffer negativo eliminou a geometria por completo.");
+                } else {
+                    const targetAreaM2 = config.targetAreaKm2 * 1000000;
+                    let low = -20000; 
+                    let high = 50000;
+                    let mid = 0;
+                    const tolerance = 5;
+
+                    for (let i = 0; i < 100; i++) {
+                        mid = (low + high) / 2;
+                        const res = getBufferedResult(mid);
+                        const currentArea = res.area;
+                        
+                        if (Math.abs(currentArea - targetAreaM2) <= tolerance) {
+                            finalGeom = res.geom;
+                            finalDistance = mid;
+                            break;
+                        }
+                        
+                        if (currentArea < targetAreaM2) low = mid;
+                        else high = mid;
+
+                        if (i === 99) {
+                            finalGeom = res.geom;
+                            finalDistance = mid;
+                        }
+                    }
+                    if (!finalGeom || finalGeom.isEmpty()) throw new Error("Falha matemática: Área alvo muito pequena ou impossível de atingir.");
+                }
+
+                const geoJsonWriter = new jsts.io.GeoJSONWriter();
+                const bufferedGeoJsonUTM = geoJsonWriter.write(finalGeom);
+
+                function convertGeoJsonToWgs84(node) {
+                    if (!node) return null;
+                    if (node.type === 'GeometryCollection') {
+                        return { type: 'GeometryCollection', geometries: node.geometries.map(convertGeoJsonToWgs84) };
+                    }
+                    return {
+                        type: node.type,
+                        coordinates: mapCoordinates(node.coordinates, (c) => proj4("UTM_LOCAL", "WGS84", c))
+                    };
+                }
+
+                const wgs84Node = convertGeoJsonToWgs84(bufferedGeoJsonUTM);
+
+                function generateLinearRing(ringCoords, tagType) {
+                    const coordStr = ringCoords.map(c => `${c[0]},${c[1]},0`).join(' ');
+                    return `<${tagType}><LinearRing><coordinates>${coordStr}</coordinates></LinearRing></${tagType}>`;
+                }
+
+                function generateKmlFromGeoJson(node) {
+                    let kml = "";
+                    if (node.type === 'Polygon') {
+                        kml += "<Polygon>";
+                        kml += generateLinearRing(node.coordinates[0], "outerBoundaryIs");
+                        for (let i = 1; i < node.coordinates.length; i++) {
+                            kml += generateLinearRing(node.coordinates[i], "innerBoundaryIs");
+                        }
+                        kml += "</Polygon>";
+                    } else if (node.type === 'MultiPolygon') {
+                        kml += "<MultiGeometry>";
+                        node.coordinates.forEach(polygon => {
+                            kml += "<Polygon>";
+                            kml += generateLinearRing(polygon[0], "outerBoundaryIs");
+                            for (let i = 1; i < polygon.length; i++) {
+                                kml += generateLinearRing(polygon[i], "innerBoundaryIs");
+                            }
+                            kml += "</Polygon>";
+                        });
+                        kml += "</MultiGeometry>";
+                    } else if (node.type === 'GeometryCollection') {
+                        kml += "<MultiGeometry>";
+                        node.geometries.forEach(g => { kml += generateKmlFromGeoJson(g); });
+                        kml += "</MultiGeometry>";
+                    } else if (node.type === 'LineString') {
+                        const coordStr = node.coordinates.map(c => `${c[0]},${c[1]},0`).join(' ');
+                        kml += `<LineString><coordinates>${coordStr}</coordinates></LineString>`;
+                    }
+                    return kml;
+                }
+
+                const coordsString = generateKmlFromGeoJson(wgs84Node);
+
+                const baseName = file.name.replace(/\.[^/.]+$/, "");
+                const valStr = config.mode === 'area' ? `${config.targetAreaKm2}km2` : `${config.distVal}m`;
+                const finalFileName = `${baseName}${nameSuffix} - ${valStr}.kml`;
+                const distInfoStr = finalDistance >= 0 ? `+${finalDistance.toFixed(2)}m` : `${finalDistance.toFixed(2)}m`;
+
+                const finalKmlString = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
     <name>${finalFileName}</name>
-    <description>Buffer gerado via UTM SIRGAS 2000 - Zona ${zone}${isSouth ? 'S' : 'N'} | Expansão: ${mid.toFixed(2)}m</description>
+    <description>Buffer gerado via UTM SIRGAS 2000 - Zona ${zone}${isSouth ? 'S' : 'N'} | Expansão: ${distInfoStr}</description>
     <Style id="polyStyle">
       <LineStyle>
         <color>ff0000ff</color>
@@ -2378,24 +2484,35 @@
       </PolyStyle>
     </Style>
     <Placemark>
-      <name>Área ${targetAreaKm2}km²</name>
+      <name>Área Buffer (${valStr})</name>
       <styleUrl>#polyStyle</styleUrl>
       ${coordsString}
     </Placemark>
   </Document>
 </kml>`;
 
-            return {
-                originalName: file.name,
-                finalName: finalFileName,
-                kmlString: finalKmlString,
-                status: 'success',
-                bufferDistance: mid,
-                zone: `${zone}${isSouth ? 'S' : 'N'}`
-            };
+                return {
+                    originalName: file.name,
+                    finalName: finalFileName,
+                    kmlString: finalKmlString,
+                    status: 'success',
+                    bufferDistance: finalDistance,
+                    zone: `${zone}${isSouth ? 'S' : 'N'}`
+                };
+            }
+
+            if (config.separateFiles && jstsGeometries.length > 1) {
+                let resultsArray = [];
+                for (let idx = 0; idx < jstsGeometries.length; idx++) {
+                    resultsArray.push(processJstsGeoms([jstsGeometries[idx]], `_P${idx + 1}`));
+                }
+                return resultsArray;
+            } else {
+                return [processJstsGeoms(jstsGeometries, "")];
+            }
         }
 
-        function bufferFinishProcessing(targetAreaKm2) {
+        function bufferFinishProcessing(targetLabel) {
             bufferLoadingScreen.classList.add('hidden');
             bufferLoadingScreen.classList.remove('flex');
             bufferResultScreen.classList.remove('hidden');
@@ -2436,7 +2553,7 @@
             if (successCount > 1) {
                 bufferDownloadAllBtn.classList.remove('hidden');
                 bufferDownloadAllBtn.classList.add('flex');
-                bufferDownloadAllBtn.onclick = () => bufferDownloadAllAsZip(targetAreaKm2);
+                bufferDownloadAllBtn.onclick = () => bufferDownloadAllAsZip(targetLabel);
             } else {
                 bufferDownloadAllBtn.classList.add('hidden');
                 bufferDownloadAllBtn.classList.remove('flex');
@@ -2466,7 +2583,7 @@
             bufferTriggerDownload(blob, item.finalName);
         };
 
-        async function bufferDownloadAllAsZip(targetAreaKm2) {
+        async function bufferDownloadAllAsZip(targetLabel) {
             const zip = new JSZip();
             bufferProcessedFiles.forEach(item => {
                 if (item.status === 'success') {
@@ -2475,7 +2592,7 @@
             });
             
             const zipBlob = await zip.generateAsync({ type: "blob" });
-            bufferTriggerDownload(zipBlob, `Lote_Buffers_${targetAreaKm2}km2.zip`);
+            bufferTriggerDownload(zipBlob, `Lote_Buffers_${targetLabel}.zip`);
         }
 
         async function bufferTriggerDownload(blob, filename) {
