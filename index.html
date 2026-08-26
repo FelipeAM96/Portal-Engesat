@@ -15,7 +15,7 @@
     <!-- JSZip (Print AOI, Buffer) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-    <!-- Leaflet CSS e JS (Print AOI) -->
+    <!-- Leaflet CSS e JS (Print AOI, Buffer Preview) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -32,7 +32,7 @@
     <!-- geotiff.js (Validador) -->
     <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
 
-    <!-- DEPENDÊNCIAS DO NOVO APP GERADOR DE BUFFER -->
+    <!-- DEPENDÊNCIAS DO APP GERADOR DE BUFFER -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/togeojson/0.16.0/togeojson.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
     <script src="https://unpkg.com/jsts@2.11.0/dist/jsts.min.js"></script>
@@ -94,7 +94,7 @@
         html.dark .bg-blue-50 { background-color: rgba(59, 130, 246, 0.15) !important; border-color: rgba(59, 130, 246, 0.2) !important;}
         html.dark .bg-green-50 { background-color: rgba(34, 197, 94, 0.1) !important; border-color: rgba(34, 197, 94, 0.2) !important; }
         html.dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.2) !important; }
-        html.dark #map { background-color: #f8f9fa !important; color: #333 !important; }
+        html.dark #map, html.dark #bufferMap { background-color: #f8f9fa !important; color: #333 !important; }
         
         /* Validador Status Colors */
         html.dark .status-match { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
@@ -131,7 +131,6 @@
                     <button onclick="switchTab('tab-validador')" id="btn-tab-validador" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i class="fas fa-satellite mr-2"></i>Validador Geo
                     </button>
-                    <!-- NOVO BOTÃO GERADOR DE BUFFER -->
                     <button onclick="switchTab('tab-buffer')" id="btn-tab-buffer" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i class="fas fa-draw-polygon mr-2"></i>Gerador de Buffer
                     </button>
@@ -541,16 +540,16 @@
 
                 <div class="p-6 md:p-8 space-y-6">
                     
-                    <!-- Upload de Arquivo -->
+                    <!-- Upload de Arquivo com Área para Drag & Drop e Click -->
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">1. Selecione os arquivos de interesse (.kml ou .kmz)</label>
                         <div class="flex items-center justify-center w-full">
-                            <label for="bufferFileInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
-                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <label for="bufferFileInput" id="bufferDropZone" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6 pointer-events-none">
                                     <svg class="w-8 h-8 mb-3 text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
                                     </svg>
-                                    <p class="mb-2 text-sm text-slate-500"><span class="font-semibold text-blue-600">Clique para enviar</span> ou arraste os arquivos</p>
+                                    <p class="mb-2 text-sm text-slate-500"><span class="font-semibold text-blue-600">Clique para buscar</span> ou arraste e solte o arquivo aqui</p>
                                     <p id="bufferFileNameDisplay" class="text-xs text-blue-600 font-bold hidden text-center px-4"></p>
                                 </div>
                                 <input id="bufferFileInput" type="file" class="hidden" accept=".kml,.kmz" multiple />
@@ -653,10 +652,25 @@
                         </div>
 
                     </div>
+                    
+                    <!-- Mapa de Pré-visualização -->
+                    <div id="bufferMapContainer" class="hidden flex-col gap-2 mt-4 relative">
+                        <label class="block text-sm font-semibold text-slate-700">Pré-visualização do Polígono Modificado</label>
+                        <div class="w-full border border-slate-300 rounded-lg shadow-inner bg-slate-200 relative" style="height: 400px;">
+                            <div id="bufferPreviewMap" class="w-full h-full z-0 rounded-lg"></div>
+                            
+                            <!-- Loading Overlay para Map Preview -->
+                            <div id="bufferMapLoading" class="hidden absolute inset-0 bg-slate-50/70 z-[1000] flex flex-col items-center justify-center rounded-lg backdrop-blur-[2px]">
+                                <div class="spinner border-blue-600 mb-2"></div>
+                                <span class="text-sm font-medium text-slate-700 bg-white/90 px-3 py-1 rounded shadow-sm">Calculando área...</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-500 text-right"><span class="text-blue-500 font-bold">Tracejado Azul:</span> Área Original &nbsp;|&nbsp; <span class="text-red-500 font-bold">Tracejado Vermelho:</span> Área Final Calculada</p>
+                    </div>
 
                     <!-- Botão Processar -->
-                    <button id="bufferProcessBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-md disabled:bg-slate-400 disabled:cursor-not-allowed">
-                        <i class="fas fa-cogs mr-2"></i> Processar Todos
+                    <button id="bufferProcessBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-md disabled:bg-slate-400 disabled:cursor-not-allowed mt-2">
+                        <i class="fas fa-download mr-2"></i> Confirmar e Baixar Polígonos Finais
                     </button>
 
                     <!-- Tela de Carregamento -->
@@ -665,7 +679,7 @@
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <p id="bufferLoadingText" class="text-blue-800 font-medium text-center">Processando arquivos...</p>
+                        <p id="bufferLoadingText" class="text-blue-800 font-medium text-center">Processando arquivos e gerando KMZs finais...</p>
                     </div>
 
                     <!-- Resultado -->
@@ -719,6 +733,7 @@
                 activeBtn.classList.remove('border-transparent', 'text-gray-500');
             }
             if (tabId === 'tab-print-aoi' && map) setTimeout(() => map.invalidateSize(), 100);
+            if (tabId === 'tab-buffer' && previewMapObj) setTimeout(() => previewMapObj.invalidateSize(), 100);
         }
 
         function copyToClipboard(textareaId, toastId) {
@@ -1668,27 +1683,23 @@
         function processFiles(files) {
             const projectData = { interesse: [], brutos: [], processados: [] };
             
-            // 1. Identificar satélites a nível de projeto
             let hasNoRawSatellite = false;
             let hasRawAllowedSatellite = false;
 
             for (let i = 0; i < files.length; i++) {
                 const p = files[i].customPath || files[i].webkitRelativePath || files[i].name;
                 
-                // Satélites que NÃO devem mostrar "Dados Brutos" (SPOT 1-5, Landsat, Sentinel)
                 if (/\bspot[\s-]*(1|2|3|4|5)\b/i.test(p) || /_S[1-5]_/i.test(p) ||
                     /\blandsat\b/i.test(p) || /^LC0[89]/i.test(files[i].name) || /^LE07/i.test(files[i].name) || /^LT0[45]/i.test(files[i].name) ||
                     /\bsentinel\b/i.test(p) || /^S2[AB]_/i.test(files[i].name)) {
                     hasNoRawSatellite = true;
                 }
                 
-                // Satélites onde "Dados Brutos" são permitidos e comuns (ex: SPOT 6, Pleiades, etc)
                 if (/\b(spot[\s-]*6|pleiades|worldview|geoeye|quickbird|planet|ikonos|kompsat|jilin|legion|beijin|eros|triplesat|superview|skysat|rapideye|gaofen|blacksky)\b/i.test(p)) {
                     hasRawAllowedSatellite = true;
                 }
             }
 
-            // Oculta completamente a pasta Brutos se o projeto for apenas Landsat/Sentinel/SPOT 1-5
             const hideBrutos = hasNoRawSatellite && !hasRawAllowedSatellite;
 
             for (let i = 0; i < files.length; i++) {
@@ -1704,9 +1715,8 @@
                 }
                 
                 if (belongsTo === 'brutos') {
-                    if (hideBrutos) continue; // Pula todos os arquivos brutos se o projeto todo for isento
+                    if (hideBrutos) continue;
                     
-                    // Fallback para projetos mistos: Ignora individualmente os arquivos brutos indesejados
                     const isIndividualNoRaw = /^\d{3}-\d{3}_S[1-5]_\d{3}-\d{3}/i.test(file.name) || 
                                               /\bspot[\s-]*(1|2|3|4|5)\b/i.test(pathToUse) ||
                                               /\blandsat\b/i.test(pathToUse) || /^LC0[89]/i.test(file.name) || /^LE07/i.test(file.name) || /^LT0[45]/i.test(file.name) ||
@@ -2175,12 +2185,35 @@
         const bufferDistanceInput = document.getElementById('bufferDistanceInput');
         const bufferMergeCheckbox = document.getElementById('bufferMergeCheckbox');
         const bufferSeparateCheckbox = document.getElementById('bufferSeparateCheckbox');
-
+        
         let bufferSelectedFiles = [];
         let bufferProcessedFiles = [];
+        let bufferParsedGeoJsons = []; // Guarda os KMLs lidos para preview rápido
 
-        // Definindo projeção WGS84 para conversões
+        // Mapa de Preview
+        let previewMapObj = null;
+        let previewOriginalLayer = null;
+        let previewBufferLayer = null;
+        let previewDebounceTimer = null;
+
+        // Definindo projeção WGS84 para conversões globais
         proj4.defs("WGS84", "+proj=longlat +datum=WGS84 +no_defs");
+
+        // Drag and drop específico para o Buffer
+        const bufferDropZone = document.getElementById('bufferDropZone');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            bufferDropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            bufferDropZone.addEventListener(eventName, () => bufferDropZone.classList.add('bg-blue-200', 'border-blue-500'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            bufferDropZone.addEventListener(eventName, () => bufferDropZone.classList.remove('bg-blue-200', 'border-blue-500'), false);
+        });
+        bufferDropZone.addEventListener('drop', (e) => {
+            bufferFileInput.files = e.dataTransfer.files;
+            bufferFileInput.dispatchEvent(new Event('change'));
+        }, false);
 
         window.toggleBufferMode = function() {
             const mode = document.querySelector('input[name="bufferMode"]:checked').value;
@@ -2191,6 +2224,7 @@
             } else {
                 areaOpts.classList.add('hidden'); distOpts.classList.remove('hidden');
             }
+            triggerBufferPreview();
         };
 
         bufferTargetAreaRadios.forEach(radio => {
@@ -2204,6 +2238,39 @@
                 }
             });
         });
+
+        // Eventos que disparam o preview
+        const previewInputs = [
+            ...document.querySelectorAll('input[name="bufferMode"]'),
+            ...document.querySelectorAll('input[name="bufferTargetArea"]'),
+            bufferCustomAreaInput, bufferDistanceInput,
+            ...document.querySelectorAll('input[name="bufferStyle"]'),
+            bufferMergeCheckbox, bufferSeparateCheckbox
+        ];
+        
+        previewInputs.forEach(input => {
+            input.addEventListener('change', triggerBufferPreview);
+            if (input.type === 'number' || input.type === 'text') {
+                input.addEventListener('input', triggerBufferPreview);
+            }
+        });
+
+        async function getGeoJsonFromKmlFile(file) {
+            let fileData;
+            if (file.name.toLowerCase().endsWith('.kmz')) {
+                const JSZipInstance = new JSZip();
+                const zip = await JSZipInstance.loadAsync(file);
+                const kmlFile = Object.values(zip.files).find(f => f.name.toLowerCase().endsWith('.kml'));
+                if (!kmlFile) throw new Error("Não contém arquivo KML válido interno.");
+                fileData = await kmlFile.async("string");
+            } else {
+                fileData = await file.text();
+            }
+            const parser = new DOMParser();
+            const kmlDoc = parser.parseFromString(fileData, "text/xml");
+            if (kmlDoc.querySelector('parsererror')) throw new Error("Erro de formatação XML.");
+            return toGeoJSON.kml(kmlDoc);
+        }
 
         bufferFileInput.addEventListener('change', async (e) => {
             bufferSelectedFiles = Array.from(e.target.files);
@@ -2219,125 +2286,178 @@
             
             bufferFileNameDisplay.classList.remove('hidden');
             bufferResetScreens();
+            
+            // Lê todos para preview, com cuidado de não travar a UI (lê os 3 primeiros para o preview pra não sobrecarregar)
+            bufferParsedGeoJsons = [];
+            const filesToPreview = bufferSelectedFiles.slice(0, 3);
+            for (let f of filesToPreview) {
+                try { bufferParsedGeoJsons.push(await getGeoJsonFromKmlFile(f)); } catch(err){}
+            }
+            triggerBufferPreview(true);
         });
 
-        bufferProcessBtn.addEventListener('click', async () => {
-            if (bufferSelectedFiles.length === 0) return bufferShowError("Por favor, selecione pelo menos um arquivo KML/KMZ.");
-            
-            const mode = document.querySelector('input[name="bufferMode"]:checked').value;
-            let targetAreaKm2 = 0;
-            let distVal = 0;
-
-            if (mode === 'area') {
-                const selectedRadio = document.querySelector('input[name="bufferTargetArea"]:checked').value;
-                if (selectedRadio === 'custom') {
-                    targetAreaKm2 = parseFloat(bufferCustomAreaInput.value);
-                    if (isNaN(targetAreaKm2) || targetAreaKm2 <= 0) return bufferShowError("Por favor, digite um valor válido para a área.");
-                } else {
-                    targetAreaKm2 = parseFloat(selectedRadio);
-                }
-            } else {
-                distVal = parseFloat(bufferDistanceInput.value);
-                if (isNaN(distVal)) return bufferShowError("Por favor, digite um valor válido para a distância em metros.");
+        function initPreviewMap() {
+            if (!previewMapObj) {
+                const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: true });
+                previewMapObj = L.map('bufferPreviewMap', { zoomControl: true, attributionControl: false, layers: [osmLayer] });
+                previewOriginalLayer = L.featureGroup().addTo(previewMapObj);
+                previewBufferLayer = L.featureGroup().addTo(previewMapObj);
             }
+        }
 
-            const config = {
-                mode: mode,
-                targetAreaKm2: targetAreaKm2,
-                distVal: distVal,
-                bufferStyle: document.querySelector('input[name="bufferStyle"]:checked').value,
-                mergeOverlaps: bufferMergeCheckbox.checked,
-                separateFiles: bufferSeparateCheckbox.checked
-            };
+        function triggerBufferPreview(immediate = false) {
+            if (bufferSelectedFiles.length === 0 || bufferParsedGeoJsons.length === 0) return;
+            clearTimeout(previewDebounceTimer);
+            document.getElementById('bufferMapContainer').classList.remove('hidden');
+            document.getElementById('bufferMapContainer').classList.add('flex');
+            document.getElementById('bufferMapLoading').classList.remove('hidden');
+            document.getElementById('bufferMapLoading').classList.add('flex');
+            
+            initPreviewMap();
+            previewMapObj.invalidateSize();
 
-            bufferResetScreens();
-            bufferLoadingScreen.classList.remove('hidden');
-            bufferLoadingScreen.classList.add('flex');
-            bufferProcessBtn.disabled = true;
-            bufferProcessedFiles = [];
+            previewDebounceTimer = setTimeout(updateBufferPreviewMap, immediate ? 50 : 800);
+        }
 
-            setTimeout(async () => {
-                for (let i = 0; i < bufferSelectedFiles.length; i++) {
-                    const file = bufferSelectedFiles[i];
-                    bufferUpdateLoading(`Processando ${i + 1} de ${bufferSelectedFiles.length}...<br><span class="text-xs">${file.name}</span>`);
-                    
+        async function updateBufferPreviewMap() {
+            try {
+                previewOriginalLayer.clearLayers();
+                previewBufferLayer.clearLayers();
+
+                const mode = document.querySelector('input[name="bufferMode"]:checked').value;
+                let targetAreaKm2 = 0; let distVal = 0;
+                if (mode === 'area') {
+                    const selectedRadio = document.querySelector('input[name="bufferTargetArea"]:checked').value;
+                    targetAreaKm2 = selectedRadio === 'custom' ? parseFloat(bufferCustomAreaInput.value) : parseFloat(selectedRadio);
+                } else {
+                    distVal = parseFloat(bufferDistanceInput.value);
+                }
+
+                const config = {
+                    mode: mode, targetAreaKm2: targetAreaKm2 || 0, distVal: distVal || 0,
+                    bufferStyle: document.querySelector('input[name="bufferStyle"]:checked').value,
+                    mergeOverlaps: bufferMergeCheckbox.checked,
+                    separateFiles: false // Preview sempre junta pra mostrar tudo visualmente
+                };
+
+                for(let geoJson of bufferParsedGeoJsons) {
+                    // Desenha Original
+                    L.geoJSON(geoJson, {
+                        style: { color: '#3b82f6', weight: 3, fillOpacity: 0.1, dashArray: '5, 8' }
+                    }).addTo(previewOriginalLayer);
+
+                    // Ignora cálculo se a config não estiver preenchida corretamente
+                    if ((mode === 'area' && (isNaN(targetAreaKm2) || targetAreaKm2 <= 0)) || 
+                        (mode === 'distance' && isNaN(distVal))) {
+                        continue; 
+                    }
+
                     try {
-                        const results = await processSingleBufferFile(file, config);
-                        bufferProcessedFiles.push(...results);
-                    } catch (err) {
-                        console.error(`Erro no arquivo ${file.name}:`, err);
-                        bufferProcessedFiles.push({
-                            originalName: file.name,
-                            status: 'error',
-                            msg: err.message || "Erro desconhecido"
+                        const bufferedResults = computeBufferWGS84(geoJson, config);
+                        bufferedResults.forEach(res => {
+                            if (res && res.geoJson) {
+                                L.geoJSON(res.geoJson, {
+                                    style: { color: '#ef4444', weight: 2, fillOpacity: 0.15, dashArray: '4, 4' }
+                                }).addTo(previewBufferLayer);
+                            }
                         });
+                    } catch (e) {
+                        // Apenas ignora silensiosamente se a geometria não puder ser buffada (ex: recuo que zera)
                     }
                 }
-                bufferFinishProcessing(mode === 'area' ? `${targetAreaKm2}km2` : `${distVal}m`);
-            }, 100);
-        });
-
-        async function processSingleBufferFile(file, config) {
-            let fileData;
-            
-            if (file.name.toLowerCase().endsWith('.kmz')) {
-                const zip = await JSZip.loadAsync(file);
-                const kmlFile = Object.values(zip.files).find(f => f.name.toLowerCase().endsWith('.kml'));
-                if (!kmlFile) throw new Error("Não contém arquivo KML válido interno.");
-                fileData = await kmlFile.async("string");
-            } else {
-                fileData = await file.text();
-            }
-
-            const parser = new DOMParser();
-            const kmlDoc = parser.parseFromString(fileData, "text/xml");
-            if (kmlDoc.querySelector('parsererror')) {
-                throw new Error("Erro de formatação XML.");
-            }
-
-            const geoJson = toGeoJSON.kml(kmlDoc);
-            
-            function extractAllGeometries(node) {
-                let geoms = [];
-                if (!node) return geoms;
-                if (node.type === 'FeatureCollection') {
-                    for (const f of (node.features || [])) geoms.push(...extractAllGeometries(f));
-                } else if (node.type === 'Feature') {
-                    geoms.push(...extractAllGeometries(node.geometry));
-                } else if (node.type === 'GeometryCollection') {
-                    for (const g of (node.geometries || [])) geoms.push(...extractAllGeometries(g));
-                } else if (['Polygon', 'MultiPolygon', 'LineString', 'MultiLineString', 'Point', 'MultiPoint'].includes(node.type)) {
-                    geoms.push(node);
+                
+                // Enquadra a câmera
+                let bounds = previewBufferLayer.getBounds().isValid() ? previewBufferLayer.getBounds() : null;
+                if(!bounds && previewOriginalLayer.getBounds().isValid()) bounds = previewOriginalLayer.getBounds();
+                
+                if (bounds && bounds.isValid()) {
+                    previewMapObj.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 });
                 }
-                return geoms;
-            }
 
+            } catch(e) {
+                console.warn("Preview Error: ", e);
+            } finally {
+                document.getElementById('bufferMapLoading').classList.add('hidden');
+                document.getElementById('bufferMapLoading').classList.remove('flex');
+            }
+        }
+
+        // Funções utilitárias geométricas
+        function extractAllGeometries(node) {
+            let geoms = [];
+            if (!node) return geoms;
+            if (node.type === 'FeatureCollection') {
+                for (const f of (node.features || [])) geoms.push(...extractAllGeometries(f));
+            } else if (node.type === 'Feature') {
+                geoms.push(...extractAllGeometries(node.geometry));
+            } else if (node.type === 'GeometryCollection') {
+                for (const g of (node.geometries || [])) geoms.push(...extractAllGeometries(g));
+            } else if (['Polygon', 'MultiPolygon', 'LineString', 'MultiLineString', 'Point', 'MultiPoint'].includes(node.type)) {
+                geoms.push(node);
+            }
+            return geoms;
+        }
+
+        function getFirstCoordinate(geometry) {
+            if (geometry.type === 'Point') return geometry.coordinates;
+            if (geometry.type === 'MultiPoint' || geometry.type === 'LineString') return geometry.coordinates[0];
+            if (geometry.type === 'MultiLineString' || geometry.type === 'Polygon') return geometry.coordinates[0][0];
+            if (geometry.type === 'MultiPolygon') return geometry.coordinates[0][0][0];
+            return null;
+        }
+
+        function mapCoordinates(coords, transformFn) {
+            if (typeof coords[0] === 'number') return transformFn(coords);
+            return coords.map(c => mapCoordinates(c, transformFn));
+        }
+
+        function generateLinearRing(ringCoords, tagType) {
+            const coordStr = ringCoords.map(c => `${c[0]},${c[1]},0`).join(' ');
+            return `<${tagType}><LinearRing><coordinates>${coordStr}</coordinates></LinearRing></${tagType}>`;
+        }
+
+        function generateKmlFromGeoJson(node) {
+            let kml = "";
+            if (node.type === 'Polygon') {
+                kml += "<Polygon>";
+                kml += generateLinearRing(node.coordinates[0], "outerBoundaryIs");
+                for (let i = 1; i < node.coordinates.length; i++) {
+                    kml += generateLinearRing(node.coordinates[i], "innerBoundaryIs");
+                }
+                kml += "</Polygon>";
+            } else if (node.type === 'MultiPolygon') {
+                kml += "<MultiGeometry>";
+                node.coordinates.forEach(polygon => {
+                    kml += "<Polygon>";
+                    kml += generateLinearRing(polygon[0], "outerBoundaryIs");
+                    for (let i = 1; i < polygon.length; i++) {
+                        kml += generateLinearRing(polygon[i], "innerBoundaryIs");
+                    }
+                    kml += "</Polygon>";
+                });
+                kml += "</MultiGeometry>";
+            } else if (node.type === 'GeometryCollection') {
+                kml += "<MultiGeometry>";
+                node.geometries.forEach(g => { kml += generateKmlFromGeoJson(g); });
+                kml += "</MultiGeometry>";
+            } else if (node.type === 'LineString') {
+                const coordStr = node.coordinates.map(c => `${c[0]},${c[1]},0`).join(' ');
+                kml += `<LineString><coordinates>${coordStr}</coordinates></LineString>`;
+            }
+            return kml;
+        }
+
+        // O Cérebro matemático do Buffer
+        function computeBufferWGS84(geoJson, config) {
             const extractedGeometries = extractAllGeometries(geoJson);
-            
-            if (extractedGeometries.length === 0) {
-                throw new Error("Nenhuma geometria válida encontrada.");
-            }
-
-            function getFirstCoordinate(geometry) {
-                if (geometry.type === 'Point') return geometry.coordinates;
-                if (geometry.type === 'MultiPoint' || geometry.type === 'LineString') return geometry.coordinates[0];
-                if (geometry.type === 'MultiLineString' || geometry.type === 'Polygon') return geometry.coordinates[0][0];
-                if (geometry.type === 'MultiPolygon') return geometry.coordinates[0][0][0];
-                return null;
-            }
-
+            if (extractedGeometries.length === 0) throw new Error("Nenhuma geometria válida encontrada no arquivo.");
             const firstCoord = getFirstCoordinate(extractedGeometries[0]);
-            if (!firstCoord) throw new Error("Coordenadas inválidas.");
+            if (!firstCoord) throw new Error("Coordenadas inválidas detectadas.");
 
             const zone = Math.floor((firstCoord[0] + 180) / 6) + 1;
             const isSouth = firstCoord[1] < 0;
             const utmProjString = `+proj=utm +zone=${zone} ${isSouth ? '+south ' : ''}+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs`;
             proj4.defs("UTM_LOCAL", utmProjString);
-
-            function mapCoordinates(coords, transformFn) {
-                if (typeof coords[0] === 'number') return transformFn(coords);
-                return coords.map(c => mapCoordinates(c, transformFn));
-            }
 
             const geoJsonReader = new jsts.io.GeoJSONReader();
             const jstsGeometries = extractedGeometries.map(geom => {
@@ -2380,15 +2500,15 @@
                     finalDistance = config.distVal;
                     const res = getBufferedResult(finalDistance);
                     finalGeom = res.geom;
-                    if (finalGeom.isEmpty()) throw new Error("O valor de buffer negativo eliminou a geometria por completo.");
+                    if (finalGeom.isEmpty()) throw new Error("O valor de buffer negativo (recuo) eliminou a geometria por completo.");
                 } else {
                     const targetAreaM2 = config.targetAreaKm2 * 1000000;
                     let low = -20000; 
                     let high = 50000;
                     let mid = 0;
-                    const tolerance = 5;
+                    const tolerance = 5; // 5 metros quadrados de precisão máxima
 
-                    for (let i = 0; i < 100; i++) {
+                    for (let i = 0; i < 100; i++) { // Max Iterations
                         mid = (low + high) / 2;
                         const res = getBufferedResult(mid);
                         const currentArea = res.area;
@@ -2407,7 +2527,7 @@
                             finalDistance = mid;
                         }
                     }
-                    if (!finalGeom || finalGeom.isEmpty()) throw new Error("Falha matemática: Área alvo muito pequena ou impossível de atingir.");
+                    if (!finalGeom || finalGeom.isEmpty()) throw new Error("Falha ao calcular. A área alvo é impossível ou destruiu o polígono.");
                 }
 
                 const geoJsonWriter = new jsts.io.GeoJSONWriter();
@@ -2424,79 +2544,10 @@
                     };
                 }
 
-                const wgs84Node = convertGeoJsonToWgs84(bufferedGeoJsonUTM);
-
-                function generateLinearRing(ringCoords, tagType) {
-                    const coordStr = ringCoords.map(c => `${c[0]},${c[1]},0`).join(' ');
-                    return `<${tagType}><LinearRing><coordinates>${coordStr}</coordinates></LinearRing></${tagType}>`;
-                }
-
-                function generateKmlFromGeoJson(node) {
-                    let kml = "";
-                    if (node.type === 'Polygon') {
-                        kml += "<Polygon>";
-                        kml += generateLinearRing(node.coordinates[0], "outerBoundaryIs");
-                        for (let i = 1; i < node.coordinates.length; i++) {
-                            kml += generateLinearRing(node.coordinates[i], "innerBoundaryIs");
-                        }
-                        kml += "</Polygon>";
-                    } else if (node.type === 'MultiPolygon') {
-                        kml += "<MultiGeometry>";
-                        node.coordinates.forEach(polygon => {
-                            kml += "<Polygon>";
-                            kml += generateLinearRing(polygon[0], "outerBoundaryIs");
-                            for (let i = 1; i < polygon.length; i++) {
-                                kml += generateLinearRing(polygon[i], "innerBoundaryIs");
-                            }
-                            kml += "</Polygon>";
-                        });
-                        kml += "</MultiGeometry>";
-                    } else if (node.type === 'GeometryCollection') {
-                        kml += "<MultiGeometry>";
-                        node.geometries.forEach(g => { kml += generateKmlFromGeoJson(g); });
-                        kml += "</MultiGeometry>";
-                    } else if (node.type === 'LineString') {
-                        const coordStr = node.coordinates.map(c => `${c[0]},${c[1]},0`).join(' ');
-                        kml += `<LineString><coordinates>${coordStr}</coordinates></LineString>`;
-                    }
-                    return kml;
-                }
-
-                const coordsString = generateKmlFromGeoJson(wgs84Node);
-
-                const baseName = file.name.replace(/\.[^/.]+$/, "");
-                const valStr = config.mode === 'area' ? `${config.targetAreaKm2}km2` : `${config.distVal}m`;
-                const finalFileName = `${baseName}${nameSuffix} - ${valStr}.kml`;
-                const distInfoStr = finalDistance >= 0 ? `+${finalDistance.toFixed(2)}m` : `${finalDistance.toFixed(2)}m`;
-
-                const finalKmlString = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>${finalFileName}</name>
-    <description>Buffer gerado via UTM SIRGAS 2000 - Zona ${zone}${isSouth ? 'S' : 'N'} | Expansão: ${distInfoStr}</description>
-    <Style id="polyStyle">
-      <LineStyle>
-        <color>ff0000ff</color>
-        <width>2</width>
-      </LineStyle>
-      <PolyStyle>
-        <color>400000ff</color>
-      </PolyStyle>
-    </Style>
-    <Placemark>
-      <name>Área Buffer (${valStr})</name>
-      <styleUrl>#polyStyle</styleUrl>
-      ${coordsString}
-    </Placemark>
-  </Document>
-</kml>`;
-
                 return {
-                    originalName: file.name,
-                    finalName: finalFileName,
-                    kmlString: finalKmlString,
-                    status: 'success',
-                    bufferDistance: finalDistance,
+                    geoJson: convertGeoJsonToWgs84(bufferedGeoJsonUTM),
+                    distance: finalDistance,
+                    suffix: nameSuffix,
                     zone: `${zone}${isSouth ? 'S' : 'N'}`
                 };
             }
@@ -2511,6 +2562,110 @@
                 return [processJstsGeoms(jstsGeometries, "")];
             }
         }
+
+        // Executa o Buffer Definitivo
+        bufferProcessBtn.addEventListener('click', async () => {
+            if (bufferSelectedFiles.length === 0) return bufferShowError("Por favor, selecione pelo menos um arquivo KML/KMZ.");
+            
+            const mode = document.querySelector('input[name="bufferMode"]:checked').value;
+            let targetAreaKm2 = 0;
+            let distVal = 0;
+
+            if (mode === 'area') {
+                const selectedRadio = document.querySelector('input[name="bufferTargetArea"]:checked').value;
+                if (selectedRadio === 'custom') {
+                    targetAreaKm2 = parseFloat(bufferCustomAreaInput.value);
+                    if (isNaN(targetAreaKm2) || targetAreaKm2 <= 0) return bufferShowError("Por favor, digite um valor válido para a área.");
+                } else {
+                    targetAreaKm2 = parseFloat(selectedRadio);
+                }
+            } else {
+                distVal = parseFloat(bufferDistanceInput.value);
+                if (isNaN(distVal)) return bufferShowError("Por favor, digite um valor válido para a distância em metros.");
+            }
+
+            const config = {
+                mode: mode,
+                targetAreaKm2: targetAreaKm2,
+                distVal: distVal,
+                bufferStyle: document.querySelector('input[name="bufferStyle"]:checked').value,
+                mergeOverlaps: bufferMergeCheckbox.checked,
+                separateFiles: bufferSeparateCheckbox.checked
+            };
+
+            bufferResetScreens();
+            bufferLoadingScreen.classList.remove('hidden');
+            bufferLoadingScreen.classList.add('flex');
+            bufferProcessBtn.disabled = true;
+            bufferProcessedFiles = [];
+
+            setTimeout(async () => {
+                for (let i = 0; i < bufferSelectedFiles.length; i++) {
+                    const file = bufferSelectedFiles[i];
+                    bufferUpdateLoading(`Processando ${i + 1} de ${bufferSelectedFiles.length}...<br><span class="text-xs">${file.name}</span>`);
+                    
+                    try {
+                        const geoJson = await getGeoJsonFromKmlFile(file);
+                        const bufferedResults = computeBufferWGS84(geoJson, config);
+                        
+                        const fileBaseName = file.name.replace(/\.[^/.]+$/, "");
+                        
+                        // Formatação Exata dos Nomes (Ex: Base - Buffer 50m.kml)
+                        let valStr;
+                        if (config.mode === 'area') {
+                            valStr = `${config.targetAreaKm2}km2`;
+                        } else {
+                            valStr = `${config.distVal}m`;
+                        }
+
+                        bufferedResults.forEach(res => {
+                            const finalFileName = `${fileBaseName}${res.suffix} - Buffer ${valStr}.kml`;
+                            const coordsString = generateKmlFromGeoJson(res.geoJson);
+                            const distInfoStr = res.distance >= 0 ? `+${res.distance.toFixed(2)}m` : `${res.distance.toFixed(2)}m`;
+
+                            const finalKmlString = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${finalFileName}</name>
+    <description>Buffer gerado via UTM SIRGAS 2000 - Zona ${res.zone} | Modificação: ${distInfoStr}</description>
+    <Style id="polyStyle">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>400000ff</color>
+      </PolyStyle>
+    </Style>
+    <Placemark>
+      <name>Buffer Modificado (${valStr})</name>
+      <styleUrl>#polyStyle</styleUrl>
+      ${coordsString}
+    </Placemark>
+  </Document>
+</kml>`;
+                            bufferProcessedFiles.push({
+                                originalName: file.name,
+                                finalName: finalFileName,
+                                kmlString: finalKmlString,
+                                status: 'success',
+                                bufferDistance: res.distance,
+                                zone: res.zone
+                            });
+                        });
+                        
+                    } catch (err) {
+                        console.error(`Erro no arquivo ${file.name}:`, err);
+                        bufferProcessedFiles.push({
+                            originalName: file.name,
+                            status: 'error',
+                            msg: err.message || "Erro desconhecido"
+                        });
+                    }
+                }
+                bufferFinishProcessing(mode === 'area' ? `${targetAreaKm2}km2` : `${distVal}m`);
+            }, 100);
+        });
 
         function bufferFinishProcessing(targetLabel) {
             bufferLoadingScreen.classList.add('hidden');
@@ -2531,7 +2686,7 @@
                     div.innerHTML = `
                         <div class="flex-1 min-w-0 pr-4">
                             <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate" title="${item.finalName}">${item.finalName}</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 truncate">Buffer: +${item.bufferDistance.toFixed(1)}m (UTM ${item.zone})</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 truncate">Variação Real: ${item.bufferDistance > 0 ? '+' : ''}${item.bufferDistance.toFixed(1)}m (UTM ${item.zone})</p>
                         </div>
                         <button onclick="bufferDownloadSingleFile(${index})" class="flex-shrink-0 bg-green-100 hover:bg-green-200 text-green-700 font-bold py-1 px-3 rounded text-sm transition">
                             Baixar
@@ -2592,7 +2747,7 @@
             });
             
             const zipBlob = await zip.generateAsync({ type: "blob" });
-            bufferTriggerDownload(zipBlob, `Lote_Buffers_${targetLabel}.zip`);
+            bufferTriggerDownload(zipBlob, `Lote_Buffers_Buffer_${targetLabel}.zip`);
         }
 
         async function bufferTriggerDownload(blob, filename) {
@@ -2621,6 +2776,9 @@
             URL.revokeObjectURL(url);
         }
 
+        // ==========================================
+        // INICIALIZAÇÃO GERAL
+        // ==========================================
         document.addEventListener('DOMContentLoaded', () => {
             addArea('wt'); 
             const wtPanel = document.getElementById('wetransfer-form-panel');
