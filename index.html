@@ -104,18 +104,80 @@
         .break-words { word-break: break-all; overflow-wrap: break-word; }
         html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #475569 !important; }
         html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #475569 !important; }
+
+        /* Estilos do App Marca d'Água */
+        .bg-checkerboard {
+            background-color: #e5e7eb;
+            background-image: 
+                linear-gradient(45deg, #d1d5db 25%, transparent 25%), 
+                linear-gradient(-45deg, #d1d5db 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #d1d5db 75%), 
+                linear-gradient(-45deg, transparent 75%, #d1d5db 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        html.dark .bg-checkerboard {
+            background-color: #1e293b;
+            background-image: 
+                linear-gradient(45deg, #334155 25%, transparent 25%), 
+                linear-gradient(-45deg, #334155 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #334155 75%), 
+                linear-gradient(-45deg, transparent 75%, #334155 75%);
+        }
+        .preview-container {
+            width: 100%;
+            aspect-ratio: 1622 / 773;
+            max-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            border-radius: 0.5rem;
+            box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+        }
+        .wm-canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .wm-toast {
+            visibility: hidden;
+            min-width: 250px;
+            text-align: center;
+            border-radius: 9999px;
+            padding: 12px 24px;
+            position: fixed;
+            z-index: 1050;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s, bottom 0.3s;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .wm-toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+        .toast-success { background-color: #16a34a; color: #fff; }
+        .toast-error { background-color: #dc2626; color: #fff; }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col transition-colors duration-300">
 
-    <div class="bg-white shadow-md z-50 sticky top-0 transition-colors duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Navbar -->
+    <div class="bg-white shadow-md z-[60] sticky top-0 transition-colors duration-300">
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16 border-b border-gray-200">
                 <div class="flex-shrink-0 flex items-center gap-3">
                     <div class="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-xl">E</div>
-                    <span class="font-bold text-xl text-slate-800 tracking-tight">Portal Engesat</span>
+                    <span class="font-bold text-xl text-slate-800 tracking-tight hidden lg:block">Portal Engesat</span>
                 </div>
-                <div class="flex space-x-1 sm:space-x-6 items-center overflow-x-auto">
+                <div class="flex space-x-1 sm:space-x-4 lg:space-x-6 items-center overflow-x-auto w-full justify-start pl-4 sm:pl-8 no-scrollbar">
                     <button onclick="switchTab('tab-print-aoi')" id="btn-tab-print-aoi" class="tab-btn border-blue-600 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i class="fas fa-map-marked-alt mr-2"></i>Print AOI
                     </button>
@@ -132,12 +194,15 @@
                         <i class="fas fa-satellite mr-2"></i>Validador Geo
                     </button>
                     <button onclick="switchTab('tab-buffer')" id="btn-tab-buffer" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                        <i class="fas fa-draw-polygon mr-2"></i>Gerador de Buffer
+                        <i class="fas fa-draw-polygon mr-2"></i>Gerador Buffer
+                    </button>
+                    <button onclick="switchTab('tab-watermark')" id="btn-tab-watermark" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-stamp mr-2"></i>Marca d'Água
                     </button>
                     
                     <div class="border-l border-gray-300 h-6 mx-2 hidden sm:block"></div>
                     
-                    <button id="themeToggleBtn" class="text-slate-500 hover:text-blue-600 transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" title="Alternar Modo Noturno">
+                    <button id="themeToggleBtn" class="flex-shrink-0 text-slate-500 hover:text-blue-600 transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" title="Alternar Modo Noturno">
                         <i class="fas fa-moon text-xl" id="themeIcon"></i>
                     </button>
                 </div>
@@ -149,7 +214,7 @@
 
         <!-- ABA: PRINT AOI -->
         <div id="tab-print-aoi" class="tab-content active max-w-5xl mx-auto w-full">
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
                 <div class="bg-blue-600 p-6 text-white text-center">
                     <h1 class="text-3xl font-bold">Print AOI</h1>
                     <p class="text-blue-100 mt-2">Gere imagens de seus polígonos projetados em SIRGAS 2000 UTM automaticamente.</p>
@@ -186,7 +251,7 @@
                 </div>
             </div>
 
-            <!-- Modal Copia Manual -->
+            <!-- Modal Copia Manual (Print AOI) -->
             <div id="copyModal" class="hidden fixed inset-0 z-[1000] bg-black/80 flex items-center justify-center p-4">
                 <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
                     <div class="p-4 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
@@ -530,7 +595,7 @@
             </div>
         </div>
 
-        <!-- ABA: GERADOR DE BUFFER (NOVO) -->
+        <!-- ABA: GERADOR DE BUFFER -->
         <div id="tab-buffer" class="tab-content max-w-4xl mx-auto w-full">
             <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8 border border-slate-200">
                 <div class="bg-blue-600 p-6 text-white text-center">
@@ -713,7 +778,191 @@
             </div>
         </div>
 
-    </main>
+        <!-- ABA: MARCA D'ÁGUA -->
+        <div id="tab-watermark" class="tab-content max-w-7xl mx-auto w-full">
+            <div class="w-full bg-white rounded-2xl shadow-xl overflow-hidden mb-8 border border-slate-200 flex flex-col lg:flex-row min-h-[75vh]">
+                
+                <!-- Área Esquerda: Controles -->
+                <aside class="w-full lg:w-96 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 p-6 flex flex-col flex-shrink-0 overflow-y-auto z-20">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">Configurações de Processamento</h3>
+
+                    <div class="space-y-6 flex-grow">
+                        <!-- Dimensões do Canvas -->
+                        <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
+                            <h4 class="text-sm font-medium text-slate-700 dark:text-slate-200 font-semibold mb-3 flex justify-between">
+                                Dimensões do Resultado
+                                <span id="wm-header-res" class="text-xs text-emerald-500">1622 × 773 px</span>
+                            </h4>
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex-1">
+                                    <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Largura (px)</label>
+                                    <input type="number" id="wm-canvas-w" value="1622" class="w-full text-sm border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
+                                </div>
+                                <span class="text-slate-400 mt-5">×</span>
+                                <div class="flex-1">
+                                    <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Altura (px)</label>
+                                    <input type="number" id="wm-canvas-h" value="773" class="w-full text-sm border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <label class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                                    <input type="checkbox" id="wm-lock-ratio" checked class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                    Manter proporção (1622:773)
+                                </label>
+                                <button id="wm-btn-reset-dim" class="text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded font-medium transition-colors">Padrão</button>
+                            </div>
+                            <button id="wm-btn-auto-scale" class="mt-3 w-full text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-2 rounded transition-colors font-semibold hidden flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                Usar resolução original colada
+                            </button>
+                        </div>
+
+                        <!-- Visibilidade Marca d'água -->
+                        <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
+                            <div class="flex justify-between mb-2">
+                                <label for="wm-watermark-opacity" class="text-sm font-medium text-slate-700 dark:text-slate-200 font-semibold">Marca d'Água</label>
+                                <span id="wm-opacity-val" class="text-sm font-bold text-slate-900 dark:text-slate-100 px-2 rounded border border-slate-200 shadow-sm">100%</span>
+                            </div>
+                            <input type="range" id="wm-watermark-opacity" min="0" max="100" value="100" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                        </div>
+
+                        <!-- Degradação -->
+                        <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
+                            <div class="flex justify-between mb-2">
+                                <label for="wm-degradation" class="text-sm font-medium text-slate-700 dark:text-slate-200 font-semibold">Degradação (Pixelização)</label>
+                                <span id="wm-deg-val" class="text-sm font-bold text-slate-900 dark:text-slate-100 px-2 rounded border border-slate-200 shadow-sm">0%</span>
+                            </div>
+                            <input type="range" id="wm-degradation" min="0" max="100" value="0" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500">
+                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                                <span>Nítido</span>
+                                <span>Intenso</span>
+                            </div>
+                        </div>
+
+                        <hr class="border-slate-200 dark:border-slate-700">
+
+                        <!-- Nome do Arquivo (Expansível) -->
+                        <div class="bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 overflow-hidden transition-all duration-300">
+                            <button type="button" onclick="document.getElementById('wm-filename-settings-content').classList.toggle('hidden'); document.getElementById('wm-filename-chevron').classList.toggle('rotate-180');" class="w-full flex justify-between items-center p-4 focus:outline-none hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-colors">
+                                <h4 class="text-sm font-medium text-slate-700 dark:text-slate-200 font-semibold">Nome da Amostra</h4>
+                                <svg id="wm-filename-chevron" class="w-5 h-5 text-slate-500 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            
+                            <div id="wm-filename-settings-content" class="hidden p-4 pt-0">
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs text-slate-500 mb-1">Prefixo / Nome</label>
+                                        <input type="text" id="wm-input-amostra" value="Amostra" class="w-full text-sm border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-slate-500 mb-1">Satélite (Opcional)</label>
+                                        <input type="text" id="wm-input-satelite" placeholder="Ex: Pleiades" class="w-full text-sm border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-slate-500 mb-1">Ano (Opcional)</label>
+                                        <input type="text" id="wm-input-ano" placeholder="Ex: 2026" class="w-full text-sm border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100 dark:bg-blue-900/30 dark:border-blue-800">
+                                    <span class="block text-[10px] text-blue-600 dark:text-blue-400 uppercase font-bold tracking-wide mb-1">Salvará como:</span>
+                                    <span id="wm-filename-preview" class="text-sm font-mono text-blue-900 dark:text-blue-100 break-all">Amostra.png</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botões de Ação -->
+                    <div class="mt-8 space-y-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <button id="wm-btn-copy" disabled class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-xl shadow-lg shadow-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                            COPIAR IMAGEM
+                        </button>
+                        <button id="wm-btn-save" disabled class="w-full flex items-center justify-center gap-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-3 px-4 rounded-xl border border-slate-300 dark:border-slate-600 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            SALVAR IMAGEM
+                        </button>
+                    </div>
+                </aside>
+
+                <!-- Área Direita: Preview e Dropzone -->
+                <div class="flex-grow flex flex-col p-6 overflow-y-auto lg:overflow-hidden relative bg-slate-50 dark:bg-slate-800 min-w-0">
+                    
+                    <!-- Estado Vazio (Instruções) -->
+                    <div id="wm-empty-state" class="absolute inset-6 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 flex flex-col items-center justify-center transition-colors hover:border-slate-400 z-10">
+                        <div class="text-center p-8">
+                            <svg class="mx-auto h-16 w-16 text-slate-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <h2 class="text-2xl font-bold text-slate-700 mb-2">Cole uma imagem aqui</h2>
+                            <p class="text-slate-500 mb-6 bg-slate-200 px-4 py-2 rounded-lg inline-block font-mono text-lg">Pressione <kbd class="font-bold">Ctrl + V</kbd></p>
+                            <div class="flex items-center justify-center gap-4 w-full">
+                                <hr class="flex-grow border-slate-300">
+                                <span class="text-sm text-slate-400 uppercase tracking-wider font-semibold">OU</span>
+                                <hr class="flex-grow border-slate-300">
+                            </div>
+                            <div class="mt-6">
+                                <label for="wm-file-upload" class="cursor-pointer inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors">
+                                    Importar imagem do PC
+                                </label>
+                                <input id="wm-file-upload" type="file" class="sr-only" accept="image/png, image/jpeg, image/jpg, image/webp">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Área de Visualização (Oculta até carregar imagem) -->
+                    <div id="wm-preview-area" class="hidden flex-col h-full w-full">
+                        <div class="flex justify-between items-end mb-2">
+                            <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-200">Visualização Final</h2>
+                            <button id="wm-btn-change-image" class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Trocar Imagem
+                            </button>
+                        </div>
+                        
+                        <div class="preview-container bg-checkerboard border border-slate-200" id="wm-canvas-container">
+                            <canvas id="wm-main-canvas" width="1622" height="773" class="wm-canvas"></canvas>
+                        </div>
+                        
+                        <p class="text-xs text-slate-500 mt-3 text-center">
+                            O que você vê acima é exatamente o que será copiado. As áreas quadriculadas representam transparência que será preservada.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fallback Modal para Cópia Manual (Watermark App) -->
+
+    <!-- Fallback Modal para Cópia Manual (Watermark App) -->
+    <div id="wm-copy-modal" class="fixed inset-0 z-[1000] hidden bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                <h3 class="text-lg font-bold text-slate-800">Cópia Manual Necessária</h3>
+                <button id="wm-btn-close-modal" class="text-slate-500 hover:text-slate-700 p-1 transition-colors rounded-lg hover:bg-slate-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-grow flex flex-col items-center">
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg mb-6 text-sm flex items-start gap-3 w-full">
+                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <div>
+                        <p class="font-bold mb-1">O navegador bloqueou a cópia automática por questões de segurança.</p>
+                        <p class="mt-2 text-base text-slate-900 font-bold bg-amber-200/50 inline-block px-2 py-1 rounded">Para copiar agora: Clique com o botão direito na imagem abaixo e selecione "Copiar imagem".</p>
+                    </div>
+                </div>
+                <div class="bg-checkerboard border border-slate-200 rounded-lg overflow-hidden w-full relative shadow-inner flex items-center justify-center">
+                    <img id="wm-fallback-image" class="max-w-full h-auto object-contain" alt="Imagem gerada para cópia">
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+                <button id="wm-btn-close-modal-bottom" class="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 font-medium transition-colors">Entendi, Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification (Geral/Watermark) -->
+    <div id="wm-toast" class="wm-toast">Mensagem</div>
 
     <script>
         function switchTab(tabId) {
@@ -726,11 +975,6 @@
             if(targetTab) {
                 targetTab.classList.add('active');
                 if (tabId === 'tab-wetransfer' || tabId === 'tab-folha') targetTab.classList.add('flex-container');
-            }
-            const activeBtn = document.getElementById('btn-' + tabId);
-            if(activeBtn) {
-                activeBtn.classList.add('border-blue-600', 'text-blue-600');
-                activeBtn.classList.remove('border-transparent', 'text-gray-500');
             }
             if (tabId === 'tab-print-aoi' && map) setTimeout(() => map.invalidateSize(), 100);
             if (tabId === 'tab-buffer' && previewMapObj) setTimeout(() => previewMapObj.invalidateSize(), 100);
@@ -1024,7 +1268,10 @@
             window.scrollTo(0, 0);
             await new Promise(r => setTimeout(r, 500));
             try {
-                return await html2canvas(mapNode, { useCORS: true, allowTaint: false, backgroundColor: '#ffffff', scale: 2 });
+                const canvasPromise = html2canvas(mapNode, { useCORS: true, allowTaint: false, backgroundColor: '#ffffff', scale: 2 });
+                // Adicionado um limite de tempo para evitar que o html2canvas congele infinitamente em erros de CORS
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("O tempo de geração excedeu. O navegador bloqueou as imagens do mapa.")), 15000));
+                return await Promise.race([canvasPromise, timeoutPromise]);
             } finally {
                 if (zoomControl) zoomControl.style.display = '';
                 if (layersControl) layersControl.style.display = ''; 
@@ -1037,8 +1284,16 @@
             try {
                 const canvas = await generateMapCanvas();
                 const link = document.createElement('a');
-                link.download = `${currentFileName}_Mapa.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click();
-            } catch (err) { alert("Erro ao gerar imagem."); } 
+                link.download = `${currentFileName}_Mapa.png`; 
+                link.href = canvas.toDataURL('image/png', 1.0); 
+                link.click();
+            } catch (err) { 
+                if (err.name === 'SecurityError') {
+                    alert("Bloqueio de Segurança: Não é possível exportar a imagem abrindo o arquivo direto do PC (file://). Abra o projeto utilizando um servidor local (ex: Live Server no VS Code).");
+                } else {
+                    alert("Erro ao gerar imagem: " + err.message); 
+                }
+            } 
             finally { downloadBtn.innerHTML = originalText; downloadBtn.disabled = false; }
         });
 
@@ -1059,7 +1314,14 @@
                         document.getElementById('copyModal').classList.remove('hidden'); copyBtn.innerHTML = originalText; copyBtn.disabled = false;
                     }
                 }, 'image/png', 1.0);
-            } catch (err) { alert("Erro ao copiar."); copyBtn.disabled = false; copyBtn.innerHTML = originalText; }
+            } catch (err) { 
+                if (err.name === 'SecurityError' || (err.message && err.message.includes('Tainted'))) {
+                    alert("Bloqueio de Segurança: O navegador barrou a cópia em arquivos locais (file://). Para funcionar, rode o HTML em um servidor (ex: Live Server).");
+                } else {
+                    alert("Erro ao copiar: " + err.message); 
+                }
+                copyBtn.disabled = false; copyBtn.innerHTML = originalText; 
+            }
         });
 
         const dropZone = document.querySelector('label[for="fileInput"]');
@@ -2188,18 +2450,15 @@
         
         let bufferSelectedFiles = [];
         let bufferProcessedFiles = [];
-        let bufferParsedGeoJsons = []; // Guarda os KMLs lidos para preview rápido
+        let bufferParsedGeoJsons = []; 
 
-        // Mapa de Preview
         let previewMapObj = null;
         let previewOriginalLayer = null;
         let previewBufferLayer = null;
         let previewDebounceTimer = null;
 
-        // Definindo projeção WGS84 para conversões globais
         proj4.defs("WGS84", "+proj=longlat +datum=WGS84 +no_defs");
 
-        // Drag and drop específico para o Buffer
         const bufferDropZone = document.getElementById('bufferDropZone');
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             bufferDropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
@@ -2239,7 +2498,6 @@
             });
         });
 
-        // Eventos que disparam o preview
         const previewInputs = [
             ...document.querySelectorAll('input[name="bufferMode"]'),
             ...document.querySelectorAll('input[name="bufferTargetArea"]'),
@@ -2287,7 +2545,6 @@
             bufferFileNameDisplay.classList.remove('hidden');
             bufferResetScreens();
             
-            // Lê todos para preview, com cuidado de não travar a UI (lê os 3 primeiros para o preview pra não sobrecarregar)
             bufferParsedGeoJsons = [];
             const filesToPreview = bufferSelectedFiles.slice(0, 3);
             for (let f of filesToPreview) {
@@ -2337,16 +2594,14 @@
                     mode: mode, targetAreaKm2: targetAreaKm2 || 0, distVal: distVal || 0,
                     bufferStyle: document.querySelector('input[name="bufferStyle"]:checked').value,
                     mergeOverlaps: bufferMergeCheckbox.checked,
-                    separateFiles: false // Preview sempre junta pra mostrar tudo visualmente
+                    separateFiles: false
                 };
 
                 for(let geoJson of bufferParsedGeoJsons) {
-                    // Desenha Original
                     L.geoJSON(geoJson, {
                         style: { color: '#3b82f6', weight: 3, fillOpacity: 0.1, dashArray: '5, 8' }
                     }).addTo(previewOriginalLayer);
 
-                    // Ignora cálculo se a config não estiver preenchida corretamente
                     if ((mode === 'area' && (isNaN(targetAreaKm2) || targetAreaKm2 <= 0)) || 
                         (mode === 'distance' && isNaN(distVal))) {
                         continue; 
@@ -2362,11 +2617,9 @@
                             }
                         });
                     } catch (e) {
-                        // Apenas ignora silensiosamente se a geometria não puder ser buffada (ex: recuo que zera)
                     }
                 }
                 
-                // Enquadra a câmera
                 let bounds = previewBufferLayer.getBounds().isValid() ? previewBufferLayer.getBounds() : null;
                 if(!bounds && previewOriginalLayer.getBounds().isValid()) bounds = previewOriginalLayer.getBounds();
                 
@@ -2382,7 +2635,6 @@
             }
         }
 
-        // Funções utilitárias geométricas
         function extractAllGeometries(node) {
             let geoms = [];
             if (!node) return geoms;
@@ -2447,7 +2699,6 @@
             return kml;
         }
 
-        // O Cérebro matemático do Buffer
         function computeBufferWGS84(geoJson, config) {
             const extractedGeometries = extractAllGeometries(geoJson);
             if (extractedGeometries.length === 0) throw new Error("Nenhuma geometria válida encontrada no arquivo.");
@@ -2506,9 +2757,9 @@
                     let low = -20000; 
                     let high = 50000;
                     let mid = 0;
-                    const tolerance = 5; // 5 metros quadrados de precisão máxima
+                    const tolerance = 5; 
 
-                    for (let i = 0; i < 100; i++) { // Max Iterations
+                    for (let i = 0; i < 100; i++) { 
                         mid = (low + high) / 2;
                         const res = getBufferedResult(mid);
                         const currentArea = res.area;
@@ -2563,7 +2814,6 @@
             }
         }
 
-        // Executa o Buffer Definitivo
         bufferProcessBtn.addEventListener('click', async () => {
             if (bufferSelectedFiles.length === 0) return bufferShowError("Por favor, selecione pelo menos um arquivo KML/KMZ.");
             
@@ -2610,7 +2860,6 @@
                         
                         const fileBaseName = file.name.replace(/\.[^/.]+$/, "");
                         
-                        // Formatação Exata dos Nomes (Ex: Base - Buffer 50m.kml)
                         let valStr;
                         if (config.mode === 'area') {
                             valStr = `${config.targetAreaKm2}km2`;
@@ -2777,6 +3026,426 @@
         }
 
         // ==========================================
+        // LÓGICA DO APP MARCA D'ÁGUA
+        // ==========================================
+        const wmCanvas = document.getElementById('wm-main-canvas');
+        const wmCtx = wmCanvas.getContext('2d', { alpha: true });
+        
+        const wmEmptyState = document.getElementById('wm-empty-state');
+        const wmPreviewArea = document.getElementById('wm-preview-area');
+        const wmFileInput = document.getElementById('wm-file-upload');
+        const wmBtnChangeImage = document.getElementById('wm-btn-change-image');
+        
+        const wmInputW = document.getElementById('wm-canvas-w');
+        const wmInputH = document.getElementById('wm-canvas-h');
+        const wmLockRatio = document.getElementById('wm-lock-ratio');
+        const wmBtnResetDim = document.getElementById('wm-btn-reset-dim');
+        const wmBtnAutoScale = document.getElementById('wm-btn-auto-scale');
+        const wmHeaderRes = document.getElementById('wm-header-res');
+
+        const wmSliderOpacity = document.getElementById('wm-watermark-opacity');
+        const wmValOpacity = document.getElementById('wm-opacity-val');
+        const wmSliderDegradation = document.getElementById('wm-degradation');
+        const wmValDegradation = document.getElementById('wm-deg-val');
+        
+        const wmInputAmostra = document.getElementById('wm-input-amostra');
+        const wmInputSatelite = document.getElementById('wm-input-satelite');
+        const wmInputAno = document.getElementById('wm-input-ano');
+        const wmFilenamePreview = document.getElementById('wm-filename-preview');
+        
+        const wmBtnCopy = document.getElementById('wm-btn-copy');
+        const wmBtnSave = document.getElementById('wm-btn-save');
+        const wmToastEl = document.getElementById('wm-toast');
+
+        const wmCopyModal = document.getElementById('wm-copy-modal');
+        const wmFallbackImage = document.getElementById('wm-fallback-image');
+        const wmBtnCloseModal = document.getElementById('wm-btn-close-modal');
+        const wmBtnCloseModalBottom = document.getElementById('wm-btn-close-modal-bottom');
+
+        let wmOriginalImage = null;
+        let wmWatermarkImage = null;
+        let wmCurrentFilename = 'Amostra.png';
+        let wmCanvasWidth = 1622;
+        let wmCanvasHeight = 773;
+        const WM_BASE_RATIO = 1622 / 773;
+
+        function initWatermark() {
+            wmLoadWatermark();
+            wmSetupEventListeners();
+            wmUpdateFilename();
+        }
+
+        function wmLoadWatermark() {
+            wmWatermarkImage = new Image();
+            wmWatermarkImage.onload = () => {
+                // Testa se a imagem vai sujar (taint) o canvas antes de usá-la no canvas principal
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 1; tempCanvas.height = 1;
+                const tempCtx = tempCanvas.getContext('2d');
+                try {
+                    tempCtx.drawImage(wmWatermarkImage, 0, 0);
+                    tempCtx.getImageData(0, 0, 1, 1); // Dispara erro de segurança se a imagem for local (file://)
+                    
+                    // Se não der erro, a imagem é segura para uso
+                    if (wmOriginalImage) wmRenderCanvas();
+                } catch (err) {
+                    console.warn("Navegador bloqueou a imagem local da logo (CORS/Tainted). Usando fallback gerado via código.");
+                    wmWatermarkImage.src = wmGenerateFallbackWatermark(); // Recarrega com imagem base64 (segura)
+                }
+            };
+            wmWatermarkImage.onerror = () => {
+                console.warn("Arquivo 'Engesat.png' ausente. Usando marca d'água gerada via código.");
+                wmWatermarkImage.onerror = null;
+                wmWatermarkImage.src = wmGenerateFallbackWatermark();
+            };
+            wmWatermarkImage.src = 'img/Engesat.png'; // Caminho baseado no ícone do site
+        }
+
+        function wmGenerateFallbackWatermark() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 1622;
+            tempCanvas.height = 773;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCtx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+            tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+            tempCtx.rotate(-25 * Math.PI / 180);
+            tempCtx.translate(-tempCanvas.width, -tempCanvas.height);
+
+            for (let x = -500; x < tempCanvas.width * 2; x += 480) {
+                for (let y = -500; y < tempCanvas.height * 2; y += 200) {
+                    tempCtx.font = 'bold 80px Arial, sans-serif';
+                    tempCtx.fillText('Engesat', x, y);
+                    tempCtx.font = '32px Arial, sans-serif';
+                    tempCtx.fillText('Amostra de imagem', x + 5, y + 45);
+                }
+            }
+            return tempCanvas.toDataURL('image/png');
+        }
+
+        function wmSetupEventListeners() {
+            document.addEventListener('paste', wmHandlePaste);
+            wmFileInput.addEventListener('change', wmHandleFileUpload);
+            
+            wmBtnChangeImage.addEventListener('click', () => {
+                wmOriginalImage = null;
+                wmEmptyState.classList.remove('hidden');
+                wmPreviewArea.classList.add('hidden');
+                wmPreviewArea.classList.remove('flex');
+                wmBtnCopy.disabled = true;
+                wmBtnSave.disabled = true;
+                wmBtnAutoScale.classList.add('hidden');
+                wmCtx.clearRect(0, 0, wmCanvasWidth, wmCanvasHeight);
+            });
+
+            wmInputW.addEventListener('input', () => wmUpdateDimensions('w'));
+            wmInputH.addEventListener('input', () => wmUpdateDimensions('h'));
+            
+            wmBtnResetDim.addEventListener('click', () => wmUpdateDimensions('reset'));
+            
+            wmBtnAutoScale.addEventListener('click', () => {
+                if (!wmOriginalImage) return;
+                
+                const scaleW = wmOriginalImage.width / 1622;
+                const scaleH = wmOriginalImage.height / 773;
+                const bestScale = Math.max(1, scaleW, scaleH);
+                
+                const targetW = Math.round(1622 * bestScale);
+                const targetH = Math.round(773 * bestScale);
+                
+                wmInputW.value = targetW;
+                wmInputH.value = targetH;
+                
+                wmCanvasWidth = targetW;
+                wmCanvasHeight = targetH;
+                wmCanvas.width = targetW;
+                wmCanvas.height = targetH;
+                document.getElementById('wm-canvas-container').style.aspectRatio = `${targetW} / ${targetH}`;
+                wmHeaderRes.textContent = `${targetW} × ${targetH} px`;
+                
+                wmRenderCanvas();
+                wmShowToast("Canvas ajustado para a melhor resolução da imagem!", "success");
+            });
+
+            wmSliderOpacity.addEventListener('input', (e) => {
+                wmValOpacity.textContent = `${e.target.value}%`;
+                wmRenderCanvas();
+            });
+
+            wmSliderDegradation.addEventListener('input', (e) => {
+                wmValDegradation.textContent = `${e.target.value}%`;
+                wmRenderCanvas();
+            });
+
+            [wmInputAmostra, wmInputSatelite, wmInputAno].forEach(el => el.addEventListener('input', wmUpdateFilename));
+
+            wmBtnCopy.addEventListener('click', wmCopyCanvasToClipboard);
+            wmBtnSave.addEventListener('click', wmSaveCanvasToDisk);
+            
+            wmBtnCloseModal.addEventListener('click', () => wmCopyModal.classList.add('hidden'));
+            wmBtnCloseModalBottom.addEventListener('click', () => wmCopyModal.classList.add('hidden'));
+        }
+
+        function wmHandlePaste(e) {
+            // Garante que só intercepte Ctrl+V se estiver na aba Marca d'Água
+            if (!document.getElementById('tab-watermark').classList.contains('active')) return;
+
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') === 0) {
+                    const blob = items[i].getAsFile();
+                    wmLoadImageFromBlob(blob);
+                    e.preventDefault();
+                    break;
+                }
+            }
+        }
+
+        function wmHandleFileUpload(e) {
+            if (e.target.files && e.target.files[0]) {
+                wmLoadImageFromBlob(e.target.files[0]);
+            }
+        }
+
+        function wmLoadImageFromBlob(blob) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                wmOriginalImage = new Image();
+                wmOriginalImage.onload = () => {
+                    // Lógica exata para redimensionamento perfeito (Object-fit: Contain)
+                    const scaleW = wmOriginalImage.width / 1622;
+                    const scaleH = wmOriginalImage.height / 773;
+                    const bestScale = Math.max(1, scaleW, scaleH);
+                    
+                    const targetW = Math.round(1622 * bestScale);
+                    const targetH = Math.round(773 * bestScale);
+                    
+                    wmCanvasWidth = targetW;
+                    wmCanvasHeight = targetH;
+                    wmInputW.value = targetW;
+                    wmInputH.value = targetH;
+                    wmCanvas.width = targetW;
+                    wmCanvas.height = targetH;
+                    document.getElementById('wm-canvas-container').style.aspectRatio = `${targetW} / ${targetH}`;
+                    wmHeaderRes.textContent = `${targetW} × ${targetH} px`;
+
+                    wmEmptyState.classList.add('hidden');
+                    wmPreviewArea.classList.remove('hidden');
+                    wmPreviewArea.classList.add('flex');
+                    wmBtnCopy.disabled = false;
+                    wmBtnSave.disabled = false;
+                    wmBtnAutoScale.classList.remove('hidden');
+                    
+                    wmShowToast("Imagem carregada na melhor resolução possível sem degradação!", "success");
+                    wmRenderCanvas();
+                }
+                wmOriginalImage.src = event.target.result;
+            }
+            reader.readAsDataURL(blob);
+        }
+
+        function wmUpdateDimensions(source) {
+            let w = parseInt(wmInputW.value) || 1622;
+            let h = parseInt(wmInputH.value) || 773;
+
+            if (wmLockRatio.checked) {
+                if (source === 'w') {
+                    h = Math.round(w / WM_BASE_RATIO);
+                    wmInputH.value = h;
+                } else if (source === 'h') {
+                    w = Math.round(h * WM_BASE_RATIO);
+                    wmInputW.value = w;
+                } else if (source === 'reset') {
+                    w = 1622;
+                    h = 773;
+                    wmInputW.value = w;
+                    wmInputH.value = h;
+                }
+            } else if (source === 'reset') {
+                w = 1622;
+                h = 773;
+                wmInputW.value = w;
+                wmInputH.value = h;
+            }
+            
+            wmCanvasWidth = w;
+            wmCanvasHeight = h;
+            
+            wmHeaderRes.textContent = `${w} × ${h} px`;
+            
+            wmCanvas.width = wmCanvasWidth;
+            wmCanvas.height = wmCanvasHeight;
+            document.getElementById('wm-canvas-container').style.aspectRatio = `${w} / ${h}`;
+            
+            wmRenderCanvas();
+        }
+
+        function wmUpdateFilename() {
+            let parts = [];
+            const amostra = wmInputAmostra.value.trim();
+            const satelite = wmInputSatelite.value.trim();
+            const ano = wmInputAno.value.trim();
+
+            if (amostra) parts.push(amostra.replace(/[^a-zA-Z0-9_\-]/g, '_'));
+            if (satelite) parts.push(satelite.replace(/[^a-zA-Z0-9_\-]/g, '_'));
+            if (ano) parts.push(ano.replace(/[^a-zA-Z0-9_\-]/g, '_'));
+            
+            wmCurrentFilename = (parts.join('_') || 'Amostra') + '.png';
+            wmFilenamePreview.textContent = wmCurrentFilename;
+        }
+
+        function wmRenderCanvas() {
+            if (!wmOriginalImage) return;
+
+            // 1. Limpa o canvas garantindo fundo transparente
+            wmCtx.clearRect(0, 0, wmCanvasWidth, wmCanvasHeight);
+
+            // 2. Calcula ajuste "Contain" mantendo proporção e centralizando
+            const hRatio = wmCanvasWidth / wmOriginalImage.width;
+            const vRatio = wmCanvasHeight / wmOriginalImage.height;
+            const ratio = Math.min(hRatio, vRatio);
+            
+            const renderWidth = wmOriginalImage.width * ratio;
+            const renderHeight = wmOriginalImage.height * ratio;
+            
+            const offsetX = (wmCanvasWidth - renderWidth) / 2;
+            const offsetY = (wmCanvasHeight - renderHeight) / 2;
+
+            // 3. Aplica Degradação (se maior que 0)
+            let degradation = parseInt(wmSliderDegradation.value);
+            if (degradation > 0) {
+                const scaleDown = 1 - (degradation / 100 * 0.95);
+                const tempW = Math.max(1, renderWidth * scaleDown);
+                const tempH = Math.max(1, renderHeight * scaleDown);
+                
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = tempW;
+                tempCanvas.height = tempH;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Desenha imagem original reduzida no canvas temporário
+                tempCtx.drawImage(wmOriginalImage, 0, 0, tempW, tempH);
+                
+                // Desenha do canvas temporário para o principal (esticando de volta, gerando perda)
+                wmCtx.imageSmoothingEnabled = false; 
+                wmCtx.drawImage(tempCanvas, 0, 0, tempW, tempH, offsetX, offsetY, renderWidth, renderHeight);
+                wmCtx.imageSmoothingEnabled = true; // Restaura
+            } else {
+                // Desenha imagem original normal
+                wmCtx.imageSmoothingEnabled = true;
+                wmCtx.drawImage(wmOriginalImage, 0, 0, wmOriginalImage.width, wmOriginalImage.height, offsetX, offsetY, renderWidth, renderHeight);
+            }
+
+            // 4. Aplica Marca d'água
+            if (wmWatermarkImage && wmWatermarkImage.complete && wmWatermarkImage.naturalWidth > 0) {
+                const opacity = parseInt(wmSliderOpacity.value) / 100;
+                if (opacity > 0) {
+                    wmCtx.globalAlpha = opacity;
+                    
+                    // Ajusta a marca d'água para cobrir (cover) todo o canvas sem distorcer
+                    const hRatioWM = wmCanvasWidth / wmWatermarkImage.width;
+                    const vRatioWM = wmCanvasHeight / wmWatermarkImage.height;
+                    const wmRatio = Math.max(hRatioWM, vRatioWM);
+                    
+                    const wmWidth = wmWatermarkImage.width * wmRatio;
+                    const wmHeight = wmWatermarkImage.height * wmRatio;
+                    
+                    const wmOffsetX = (wmCanvasWidth - wmWidth) / 2;
+                    const wmOffsetY = (wmCanvasHeight - wmHeight) / 2;
+
+                    wmCtx.drawImage(wmWatermarkImage, wmOffsetX, wmOffsetY, wmWidth, wmHeight);
+                    
+                    wmCtx.globalAlpha = 1.0; // Restaura opacidade
+                }
+            }
+        }
+
+        function wmShowToast(message, type = 'info') {
+            wmToastEl.textContent = message;
+            wmToastEl.className = `wm-toast show toast-${type}`;
+            setTimeout(() => { wmToastEl.classList.remove('show'); }, 3000);
+        }
+
+        function wmCopyCanvasToClipboard() {
+            const originalText = wmBtnCopy.innerHTML;
+            wmBtnCopy.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Copiando...';
+            wmBtnCopy.disabled = true;
+
+            try {
+                wmCanvas.toBlob(async (blob) => {
+                    let copied = false;
+                    try {
+                        if (navigator.clipboard && navigator.clipboard.write) {
+                            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                            copied = true;
+                        }
+                    } catch (err) {
+                        console.warn("Falha via API moderna, abrindo modal de fallback", err);
+                    }
+
+                    if (copied) {
+                        wmShowToast("Imagem copiada para a área de transferência!", "success");
+                        wmBtnCopy.innerHTML = originalText;
+                        wmBtnCopy.disabled = false;
+                    } else {
+                        wmFallbackImage.src = wmCanvas.toDataURL('image/png', 1.0);
+                        wmCopyModal.classList.remove('hidden');
+                        wmBtnCopy.innerHTML = originalText;
+                        wmBtnCopy.disabled = false;
+                    }
+                }, 'image/png', 1.0);
+            } catch (err) {
+                wmShowToast("Erro de segurança (file://). Use um servidor local (Live Server).", "error");
+                wmBtnCopy.innerHTML = originalText;
+                wmBtnCopy.disabled = false;
+            }
+        }
+
+        function wmSaveCanvasToDisk() {
+            const originalText = wmBtnSave.innerHTML;
+            wmBtnSave.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Salvando...';
+            wmBtnSave.disabled = true;
+
+            try {
+                wmCanvas.toBlob(async (blob) => {
+                    try {
+                        if (window.showSaveFilePicker) {
+                            const handle = await window.showSaveFilePicker({
+                                suggestedName: wmCurrentFilename,
+                                types: [{ description: 'PNG Image', accept: {'image/png': ['.png']} }],
+                            });
+                            const writable = await handle.createWritable();
+                            await writable.write(blob);
+                            await writable.close();
+                            wmShowToast("Imagem salva com sucesso!", "success");
+                        } else {
+                            // Fallback Clássico
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = wmCurrentFilename;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                            wmShowToast("Download iniciado!", "success");
+                        }
+                    } catch (err) {
+                        if (err.name !== 'AbortError') wmShowToast("Erro ao salvar imagem.", "error");
+                    } finally {
+                        wmBtnSave.innerHTML = originalText;
+                        wmBtnSave.disabled = false;
+                    }
+                }, 'image/png', 1.0);
+            } catch (err) {
+                wmShowToast("Erro de segurança (file://). Use um servidor local (Live Server).", "error");
+                wmBtnSave.innerHTML = originalText;
+                wmBtnSave.disabled = false;
+            }
+        }
+
+
+        // ==========================================
         // INICIALIZAÇÃO GERAL
         // ==========================================
         document.addEventListener('DOMContentLoaded', () => {
@@ -2796,6 +3465,9 @@
             }
             generateFolha();
             
+            // Inicializa a nova aba de Marca d'Água
+            initWatermark();
+
             switchTab('tab-print-aoi');
             
             const themeToggleBtn = document.getElementById('themeToggleBtn'); 
