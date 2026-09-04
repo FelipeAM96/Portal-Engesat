@@ -200,6 +200,10 @@
                         <i class="fas fa-stamp mr-2"></i>Marca d'Água
                     </button>
                     
+                    <button onclick="switchTab('tab-textos')" id="btn-tab-textos" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i class="fas fa-comment-dots mr-2"></i>Textos Rápidos
+                    </button>
+
                     <div class="border-l border-gray-300 h-6 mx-2 hidden sm:block"></div>
                     
                     <button id="themeToggleBtn" class="flex-shrink-0 text-slate-500 hover:text-blue-600 transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" title="Alternar Modo Noturno">
@@ -932,6 +936,64 @@
             </div>
         </div>
 
+        <!-- ABA: TEXTOS RÁPIDOS (TEMPLATES) -->
+        <div id="tab-textos" class="tab-content max-w-7xl mx-auto w-full">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden mb-8 border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row min-h-[75vh]">
+                
+                <!-- Painel Lateral: Lista de Textos -->
+                <aside class="w-full md:w-1/3 lg:w-1/4 bg-slate-50 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col">
+                    <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
+                        <h3 class="font-bold text-slate-800 dark:text-slate-200">Meus Textos</h3>
+                        <button onclick="textosCreateNew()" class="bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800 p-2 rounded-lg transition-colors" title="Novo Texto">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div id="textos-list" class="flex-grow overflow-y-auto p-2 space-y-1">
+                        <!-- Lista injetada via JS -->
+                    </div>
+                </aside>
+
+                <!-- Painel Principal: Editor -->
+                <div class="flex-grow p-6 flex flex-col bg-white dark:bg-slate-900 relative">
+                    <div id="textos-editor-empty" class="hidden absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                        <i class="fas fa-comment-dots text-6xl mb-4 opacity-50"></i>
+                        <p class="text-lg font-medium">Selecione ou crie um texto ao lado</p>
+                    </div>
+
+                    <div id="textos-editor-content" class="flex flex-col h-full hidden">
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Título do Template</label>
+                            <input type="text" id="textos-title" class="w-full text-lg font-semibold border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 p-3 border transition-colors">
+                        </div>
+                        
+                        <div class="flex-grow flex flex-col mb-4">
+                            <div class="flex justify-between items-end mb-1">
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Conteúdo (Mensagem)</label>
+                                <button onclick="copyToClipboard('textos-content', 'textos-toast')" class="text-sm bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white py-1 px-3 rounded flex items-center gap-2 transition-colors">
+                                    <i class="fas fa-copy"></i> Copiar Texto
+                                </button>
+                            </div>
+                            <textarea id="textos-content" class="flex-grow w-full border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 p-4 border resize-none font-mono text-sm leading-relaxed transition-colors"></textarea>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <button onclick="textosDelete()" class="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+                                <i class="fas fa-trash-alt"></i> Excluir
+                            </button>
+                            <button onclick="textosSave()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:-translate-y-0.5 flex items-center gap-2">
+                                <i class="fas fa-save"></i> Salvar Alterações
+                            </button>
+                        </div>
+                        
+                        <!-- Toast Local da Aba -->
+                        <div id="textos-toast" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full font-medium text-sm shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-10">
+                            Texto copiado para a área de transferência!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Fallback Modal para Cópia Manual (Watermark App) -->
 
     <!-- Fallback Modal para Cópia Manual (Watermark App) -->
@@ -965,6 +1027,333 @@
     <div id="wm-toast" class="wm-toast">Mensagem</div>
 
     <script>
+        // ==========================================
+        // LÓGICA DO APP: TEXTOS RÁPIDOS
+        // ==========================================
+        const defaultTextos = [
+            {
+                id: "t1",
+                title: "Primeiro Atendimento (Completo)",
+                content: `Olá! Meu nome é Felipe Martin, da Engesat.
+
+Antes de tudo, preciso entender sua necessidade. Você procura:
+🛰️ Imagens de satélite
+🌎 Dados de altimetria (MDT/MDS)
+📐 Georreferenciamento de imóvel rural
+❓ Outro produto ou serviço?
+
+Para analisar sua demanda e preparar um orçamento, preciso principalmente de:
+
+📍 Área de interesse
+• Preferencialmente em KML, KMZ, SHP ou outro formato de polígono.
+• Caso não tenha, pode enviar um mapa, documento, coordenadas ou outra referência da área.
+
+📅 Período de interesse
+• Informe o período entre datas, os meses ou o ano desejado.
+• Se não houver uma data específica, pode simplesmente informar que precisa das imagens mais recentes disponíveis.
+• Para imagens de satélite, informe também se precisa de uma ou mais imagens.
+
+🛰️ Resolução desejada
+• Se já souber a resolução necessária, informe também (ex.: 30 cm, 50 cm, 1 m, 3 m etc.).
+
+🎯 Objetivo da aplicação
+• Explique brevemente para que os dados serão utilizados. Isso nos ajuda a indicar a solução mais adequada.
+
+Para imagens de satélite, o valor é calculado por km² e varia conforme o satélite/sensor, resolução e período de aquisição. Com a área e o período em mãos, faço as buscas nas bases disponíveis e apresento as melhores opções em um documento de orçamento.
+As imagens são normalmente entregues em GeoTIFF, acompanhadas de KML, mas também podemos disponibilizar em outros formatos, conforme a necessidade do cliente, como ECW, DWG, GeoPDF ou carta-imagem.
+
+Especificações técnicas usuais das imagens:
+• Ortorretificadas, georreferenciadas e mosaicadas;
+• Sistema de coordenadas UTM / SIRGAS 2000;
+• Formato GeoTIFF;
+• 3 ou 4 bandas, conforme o produto contratado.
+
+🌎 Dados altimétricos
+Trabalhamos com produtos de altimetria de cobertura global e entrega imediata, com dados referentes a aquisições realizadas entre 2017 e 2021.
+MDS – Modelo Digital de Superfície: representa a elevação da primeira superfície refletora, incluindo copa das árvores, telhados e outras estruturas.
+MDT – Modelo Digital de Terreno: representa o terreno natural, após a remoção e filtragem de vegetação e estruturas artificiais.
+
+Especificações:
+• Resolução: 5 metros;
+• Precisão planimétrica: 5 metros;
+• Precisão altimétrica: 2 m (relativa) e 2,5 m (absoluta);
+• GeoTIFF – 32 bits floating point;
+• Nuvem de pontos: LAS e TXT;
+• Curvas de nível com equidistância de 2 metros, em SHP, DWG ou KML.
+
+Mais informações:
+🛰️ Imagens de satélite: https://www.engesat.com.br/imagem-de-satelite/
+🌎 Altimetria – WorldDEM Neo: https://www.engesat.com.br/mercados/altimetria-worlddem-neo/
+📐 Georreferenciamento de imóveis rurais: https://www.engesat.com.br/mercados/georreferenciamento-de-imoveis-rurais/
+
+Se ainda não souber exatamente qual produto precisa, não tem problema. Basta me explicar o que você precisa fazer e me enviar a área de interesse e o período desejado. A partir dessas informações, verifico as opções disponíveis e indico a solução mais adequada.`
+            },
+            {
+                id: "t2",
+                title: "Condições de Pagamento",
+                content: `*Condições de Pagamento*
+
+À vista - Depósito Bancário e Transferência PIX
+
+À prazo - Cartão de Crédito (Pagar.me)
+* De 1 a 5 vezes: acréscimo de 5% sobre o valor
+* De 6 a 10 vezes: acréscimo de 10% sobre o valor 
+O link é enviado diretamente no WhatsApp, de forma prática e segura`
+            },
+            {
+                id: "t3",
+                title: "Georref. (Limites Inacessíveis)",
+                content: `Olá,
+
+Gostaria de esclarecer alguns pontos referentes aos valores apresentados e ao procedimento para o serviço de georreferenciamento de imóveis rurais com limites inacessíveis.
+
+• *Valores das imagens de satélite*
+O valor por km² varia de acordo com o satélite escolhido, assim como a área mínima de aquisição, que também pode variar conforme o satélite e o fornecedor. Dessa forma, o valor final de cada opção é calculado considerando tanto o preço por km² quanto a área mínima exigida para a aquisição da imagem.
+
+• *Procedimento para o georreferenciamento de imóveis rurais com limites inacessíveis*
+*O procedimento é realizado em etapas:*
+
+1. Fornecimento da imagem de satélite: inicialmente, é fornecida a imagem de satélite ortorretificada utilizando apenas parâmetros orbitais, sem a utilização de pontos de controle em campo.
+2. Coleta dos pontos de controle em campo: posteriormente, é necessário que sejam coletados, em campo, pontos de controle utilizando GPS/GNSS de alta precisão.
+3. É imprescindível que os pontos de controle sejam fotoidentificáveis, ou seja, que possam ser claramente identificados na imagem de satélite. Como exemplos, podem ser utilizados elementos bem definidos e facilmente reconhecíveis na imagem, como quinas de edificações, cruzamentos de estradas, extremidades de estruturas, cercas ou outros elementos físicos permanentes e claramente identificáveis.
+4. Os pontos também devem ser devidamente identificados e acompanhados do respectivo memorial descritivo, preenchido corretamente para cada ponto de controle.
+5. Envio dos dados: os pontos de controle, juntamente com os respectivos memoriais descritivos, devem ser encaminhados para que possamos realizar o processamento. Ortorretificação com GCPs: com os pontos de controle fornecidos, realizamos o processamento da ortorretificação da imagem utilizando os GCPs, buscando melhorar e validar a precisão geométrica do produto. Delimitação dos vértices virtuais: após a ortorretificação, realizamos a delimitação dos vértices virtuais correspondentes aos limites da propriedade, conforme os dados e informações fornecidos.
+6. Ao final do processo, são disponibilizados os produtos e documentos resultantes do processamento, incluindo o relatório de ortorretificação com GCPs, a imagem ortorretificada, os vértices virtuais dos limites da propriedade e o laudo final.
+
+*Para referência sobre a coleta dos pontos de controle e sobre o procedimento de georreferenciamento de imóveis rurais com limites inacessíveis, disponibilizamos mais informações em: https://www.engesat.com.br/mercados/georreferenciamento-de-imoveis-rurais/
+
+Além disso, poderiam nos encaminhar um polígono da sua área de interesse? Dessa forma, poderemos avaliar previamente as características dos limites da propriedade e verificar se a situação se enquadra nos critérios para utilização do procedimento de limites inacessíveis.
+
+Fico à disposição para quaisquer esclarecimentos adicionais.
+
+Atenciosamente,
+
+Felipe Aguiar Martin`
+            },
+            {
+                id: "t4",
+                title: "Solicitação Dados para NF",
+                content: `Para darmos continuidade ao seu pedido, solicitamos, por gentileza, o envio dos dados abaixo para emissão da Nota Fiscal: 
+ 
+* Nome completo ou Razão Social; 
+* CPF ou CNPJ; 
+* Endereço completo (rua, número, complemento, bairro); 
+* Cidade, Estado e CEP. 
+ 
+Agradecemos! 😄 
+ 
+*Dados Administrativos* 
+ 
+*Nome Fantasia:* Engesat Imagens de Satélite 
+*Razão Social:* EISAT Imagens de Satélite Ltda. 
+ 
+*Dados para Pagamento* 
+ 
+- *Banco:* Inter (077) 
+- *Agência:* 0001 
+- *Conta Corrente:* 43930235-8 
+- *Chave Pix (CNPJ):* 02.059.387/0001-87 
+-> Favor enviar comprovante de pagamento 
+ 
+Os produtos são enviados por FTP, via WeTransfer. Para qual ou quais email(s) enviar? 
+*Este(s) email(s) serão usado também para ser enviado a NF.`
+            },
+            {
+                id: "t5",
+                title: "Dados Administrativos (Curto)",
+                content: `*Dados Administrativos*
+
+*Nome Fantasia:* Engesat Imagens de Satélite
+*Razão Social:* EISAT Imagens de Satélite Ltda.
+
+*Dados para Pagamento*
+
+- *Banco:* Inter (077)
+- *Agência:* 0001
+- *Conta Corrente:* 43930235-8
+- *Chave Pix (CNPJ):* 02.059.387/0001-87
+-> Favor enviar comprovante de pagamento
+
+Os produtos são enviados por FTP, via WeTransfer. Para qual ou quais email(s) enviar?
+*Este(s) email(s) serão usado também para ser enviado a NF.`
+            }
+        ];
+
+        let textosArray = [];
+        let currentTextoId = null;
+        let dragStartIndex = null; // Variável para controlar o drag and drop
+
+        function initTextos() {
+            const saved = localStorage.getItem('engesat_textos_rapidos');
+            if (saved) {
+                try { 
+                    textosArray = JSON.parse(saved); 
+                    // Módulo de migração: limpa números antigos hardcoded (ex: "1. Primeiro...")
+                    textosArray.forEach(t => {
+                        t.title = t.title.replace(/^\d+\.\s*/, '');
+                    });
+                } catch (e) { textosArray = [...defaultTextos]; }
+            } else {
+                textosArray = [...defaultTextos];
+                localStorage.setItem('engesat_textos_rapidos', JSON.stringify(textosArray));
+            }
+            textosRenderList();
+            if (textosArray.length > 0) textosSelect(textosArray[0].id);
+            else textosShowEmpty();
+        }
+
+        function textosRenderList() {
+            const listEl = document.getElementById('textos-list');
+            listEl.innerHTML = '';
+            
+            textosArray.forEach((t, index) => {
+                const isSelected = t.id === currentTextoId;
+                
+                // Usando DIV em vez de BUTTON para permitir área de arraste isolada
+                const div = document.createElement('div');
+                div.className = `flex items-stretch w-full text-left rounded-lg text-sm font-medium transition-colors border mb-1 overflow-hidden group ${isSelected ? 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/50 dark:border-blue-700 dark:text-blue-300' : 'bg-white border-transparent text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/70 dark:hover:border-slate-600'}`;
+                
+                // Configurações do Drag and Drop
+                div.draggable = true;
+                div.dataset.index = index;
+
+                div.innerHTML = `
+                    <div class="px-3 py-3 cursor-grab opacity-40 hover:opacity-100 transition-opacity flex items-center justify-center border-r border-transparent group-hover:border-slate-200 dark:group-hover:border-slate-700 drag-handle" title="Arraste para reordenar">
+                        <i class="fas fa-grip-vertical"></i>
+                    </div>
+                    <div class="flex-grow py-3 px-3 cursor-pointer truncate flex items-center" onclick="textosSelect('${t.id}')">
+                        <i class="fas ${isSelected ? 'fa-folder-open text-blue-500 dark:text-blue-400' : 'fa-folder text-slate-400 dark:text-slate-500'} mr-2 text-base transition-colors"></i>
+                        <span class="font-bold mr-1 opacity-70">${index + 1}.</span> 
+                        <span class="truncate">${t.title || 'Sem Título'}</span>
+                    </div>
+                `;
+
+                // Eventos de Drag and Drop
+                div.addEventListener('dragstart', function(e) {
+                    dragStartIndex = +this.dataset.index;
+                    this.classList.add('opacity-50', 'border-blue-500', 'border-dashed');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', dragStartIndex);
+                });
+                
+                div.addEventListener('dragover', function(e) {
+                    e.preventDefault(); // Necessário para permitir o "drop"
+                    e.dataTransfer.dropEffect = 'move';
+                    return false;
+                });
+                
+                div.addEventListener('dragenter', function(e) {
+                    e.preventDefault();
+                    if (+this.dataset.index !== dragStartIndex) {
+                        this.classList.add('border-blue-500', 'border-dashed');
+                        this.classList.remove('border-transparent');
+                    }
+                });
+                
+                div.addEventListener('dragleave', function(e) {
+                    if (+this.dataset.index !== dragStartIndex) {
+                        this.classList.remove('border-blue-500', 'border-dashed');
+                        if (!this.classList.contains('bg-blue-100') && !this.classList.contains('dark:bg-blue-900/50')) {
+                            this.classList.add('border-transparent');
+                        }
+                    }
+                });
+                
+                div.addEventListener('drop', function(e) {
+                    e.stopPropagation();
+                    this.classList.remove('border-blue-500', 'border-dashed');
+                    
+                    const dragEndIndex = +this.dataset.index;
+                    
+                    if (dragStartIndex !== dragEndIndex) {
+                        // Move o elemento no array
+                        const itemToMove = textosArray.splice(dragStartIndex, 1)[0];
+                        textosArray.splice(dragEndIndex, 0, itemToMove);
+                        
+                        // Salva e re-renderiza
+                        localStorage.setItem('engesat_textos_rapidos', JSON.stringify(textosArray));
+                        textosRenderList();
+                    }
+                    return false;
+                });
+                
+                div.addEventListener('dragend', function(e) {
+                    this.classList.remove('opacity-50', 'border-blue-500', 'border-dashed');
+                    // Limpa rastros de hover nos outros elementos
+                    document.querySelectorAll('#textos-list > div').forEach(el => {
+                        el.classList.remove('border-blue-500', 'border-dashed');
+                    });
+                });
+
+                listEl.appendChild(div);
+            });
+        }
+
+        function textosSelect(id) {
+            currentTextoId = id;
+            const item = textosArray.find(t => t.id === id);
+            if (!item) return;
+
+            document.getElementById('textos-editor-empty').classList.add('hidden');
+            document.getElementById('textos-editor-content').classList.remove('hidden');
+            
+            document.getElementById('textos-title').value = item.title;
+            document.getElementById('textos-content').value = item.content;
+            
+            textosRenderList();
+        }
+
+        function textosShowEmpty() {
+            currentTextoId = null;
+            document.getElementById('textos-editor-empty').classList.remove('hidden');
+            document.getElementById('textos-editor-content').classList.add('hidden');
+            textosRenderList();
+        }
+
+        function textosSave() {
+            if (!currentTextoId) return;
+            const item = textosArray.find(t => t.id === currentTextoId);
+            if (item) {
+                item.title = document.getElementById('textos-title').value || 'Sem Título';
+                item.content = document.getElementById('textos-content').value;
+                localStorage.setItem('engesat_textos_rapidos', JSON.stringify(textosArray));
+                textosRenderList();
+                
+                // Animação visual no botão de salvar
+                const btn = document.querySelector('button[onclick="textosSave()"]');
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Salvo!';
+                btn.classList.replace('bg-blue-600', 'bg-green-600');
+                btn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+                setTimeout(() => {
+                    btn.innerHTML = origHtml;
+                    btn.classList.replace('bg-green-600', 'bg-blue-600');
+                    btn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+                }, 1500);
+            }
+        }
+
+        function textosCreateNew() {
+            const newId = 't_' + Date.now();
+            textosArray.push({
+                id: newId,
+                title: 'Novo Texto Automático',
+                content: ''
+            });
+            localStorage.setItem('engesat_textos_rapidos', JSON.stringify(textosArray));
+            textosSelect(newId);
+        }
+
+        function textosDelete() {
+            if (!currentTextoId) return;
+            if (confirm("Tem certeza que deseja excluir este texto?")) {
+                textosArray = textosArray.filter(t => t.id !== currentTextoId);
+                localStorage.setItem('engesat_textos_rapidos', JSON.stringify(textosArray));
+                if (textosArray.length > 0) textosSelect(textosArray[0].id);
+                else textosShowEmpty();
+            }
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => { el.classList.remove('active', 'flex-container'); });
             document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -3467,6 +3856,9 @@
             
             // Inicializa a nova aba de Marca d'Água
             initWatermark();
+            
+            // Inicializa a aba de Textos Rápidos
+            initTextos();
 
             switchTab('tab-print-aoi');
             
